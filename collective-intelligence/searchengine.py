@@ -53,7 +53,7 @@ class crawler:
                 except:
                     print "Could not open %s" % page
                     continue
-                soup = BeautifulSoup(c.read())
+                soup = BeautifulSoup(c.read().decode("ascii", "ignore"))
                 self.addtoindex(page, soup)
 
                 links = soup('a')
