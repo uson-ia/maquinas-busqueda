@@ -166,3 +166,25 @@ class searcher:
         rows = [row for row in cur]
 
         return rows, wordids
+
+    def getscoredlist(self, rows, wordids):
+        totalscores = dict([(row[0],0) for row in rows])
+
+        # (oJo)
+        weights = []
+
+        for (weight, scores) in weights:
+            for url in totalscores:
+                totalscores[url] += weight*scores[url]
+
+        return totalscores
+
+    def geturlname(self, id):
+        return self.con.execute("select url from urllist where rowid = %d" % id).fetchone()[0]
+
+    def query(self, q):
+        rows, wordids = self.getmatchrows(q)
+        scores = self.getscoredlist(rows, wordids)
+        rankedscores = sorted([(score, url) for (url, score) in scores.items()], reverse=1)
+        for (score, urlid) in rankedscores[0:10]:
+            print '%f\t%s' % (score, self.geturlname(urlid))
