@@ -218,3 +218,16 @@ class searcher:
             if loc < locations[row[0]]: locations[row[0]] = loc
 
         return self.normalizescores(locations, smallIsBetter=1)
+
+    def distancescore(self, rows):
+        # Si hay solo una palabra, todos ganan
+        if len(rows[0]) <= 2: return dict([(row[0], 1.0) for row in rows])
+
+        # Inicializa el diccionario con valores grandes
+        mindistance = dict([(row[0], 1000000) for row in rows])
+
+        for row in rows:
+            dist = sum([abs(row[i]-row[i-1]) for i in range(2, len(row))])
+            if dist < mindistance[row[0]]: mindistance[row[0]] = dist
+
+        return self.normalizescores(mindistance, smallIsBetter = 1)
