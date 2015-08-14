@@ -195,8 +195,8 @@ class searcher:
     def normalizescores(self, scores, smallIsBetter = 0):
         vsmall = 0.00001 # Evita errores de división por cero
         if smallIsBetter:
-            minscore = min(score.values())
-            return dict([(u, float(minscore)/max(vsmall, l)) for (u, l) in score.items()])
+            minscore = min(scores.values())
+            return dict([(u, float(minscore)/max(vsmall, l)) for (u, l) in scores.items()])
         else:
             maxscore = max(scores.values())
             if maxscore == 0: maxscore = vsmall
