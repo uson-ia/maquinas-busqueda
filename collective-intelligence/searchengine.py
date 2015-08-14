@@ -178,7 +178,8 @@ class searcher:
 
         # Pesos para las métricas frequencyscore y locationscore
         weights = [(1.0, self.frequencyscore(rows)),
-                   (1.5, self.locationscore(rows))]
+                   (1.5, self.locationscore(rows)),
+                   (10.0, self.distancescore(rows))]
 
         for (weight, scores) in weights:
             for url in totalscores:
