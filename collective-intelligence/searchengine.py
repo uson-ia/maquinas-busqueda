@@ -232,3 +232,9 @@ class searcher:
             if dist < mindistance[row[0]]: mindistance[row[0]] = dist
 
         return self.normalizescores(mindistance, smallIsBetter = 1)
+
+    def inboundlinkscore(self, rows):
+        uniqueurls = set([row[0] for row in rows])
+        inboundcount = dict([(u, self.con.execute("select count(*) from link where toid=%d" % u).fetchone()[0])
+                             for u in uniqueurls])
+        return self.normalizescores(inboundcount)
