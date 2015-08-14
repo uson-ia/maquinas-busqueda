@@ -170,7 +170,11 @@ class searcher:
     def getscoredlist(self, rows, wordids):
         totalscores = dict([(row[0],0) for row in rows])
 
-        weights = [(1.0, self.frequencyscore(rows))]
+        # Pesos para la métrica frequencyscore
+        # weights = [(1.0, self.frequencyscore(rows))]
+
+        # Pesos para la métrica locationscore
+        weights = [(1.0, self.locationscore(rows))]
 
         for (weight, scores) in weights:
             for url in totalscores:
@@ -202,3 +206,11 @@ class searcher:
         counts = dict([(row[0], 0) for row in rows])
         for row in rows: counts[row[0]] += 1
         return self.normalizescores(counts)
+
+    def locationscore(self, rows):
+        locations = dict([(row[0], 1000000) for row in rows])
+        for row in rows:
+            loc = sum(row[1:])
+            if loc < locations[row[0]]: locations[row[0]] = loc
+
+        return self.normalizescores(locations, smallIsBetter=1)
