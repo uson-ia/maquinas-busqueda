@@ -24,8 +24,8 @@ def has_href(link):
 
 def link_url(base_url, link):
     url = urljoin(base_url, link["href"])
-    #if url.find("'") != -1:
-    #    raise Exception("Malformed URL %s" % url)
+    if url.find("'") != -1:
+        raise Exception("Malformed URL %s" % url)
     url = url.split("#")[0]
     return url
 
