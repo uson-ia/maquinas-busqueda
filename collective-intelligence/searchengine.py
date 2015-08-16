@@ -81,7 +81,10 @@ class crawler:
 
     # Agregar un enlace entre dos páginas
     def addlinkref(self, urlFrom, urlTo, linkText):
-        pass
+        fromid = self.getentryid('urllist', 'url', urlfrom)
+        toid = self.getentryid('urllist', 'url', urlto)
+        if fromid != toid: cur = self.con.execute('insert into link (fromid, toid) values (%d, %d)'% (fromid, toid))
+
 
     # Comenzando con una lista de páginas, hacer una búsqueda a lo ancho
     # a una profundidad dada, indexando las páginas en el proceso
