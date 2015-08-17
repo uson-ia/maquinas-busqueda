@@ -10,7 +10,16 @@ test_urls = ["http://eduardoacye.github.io"]
 test_db = "searchindex.db"
 ignore_words = set(["the", "of", "to", "and", "a", "in", "is", "it"])
 
+#################
+# CRAWLER CLASS #
+#################
+
 def get_page(url):
+    """
+    url es una cadena de caracteres.
+
+    regresa el contenido y la codificación de la página asociada a la URL
+    """
     try:
         resource = urllib2.urlopen(url)
     except:
@@ -190,4 +199,3 @@ def crawl(urls, connection, depth=2):
                         new_urls.add(ref_url)
                     index_link(connection, url, ref_url, link)
         urls = list(new_urls)
-
