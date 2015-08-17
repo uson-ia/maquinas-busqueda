@@ -162,13 +162,16 @@ class searcher:
                 tablelist += 'wordlocation w%d' % tablenumber
                 clauselist += 'w%d.wordid = %d' % (tablenumber, wordid)
                 tablenumber += 1
+        try:
+            # Crear la consulta a partir de las partes separadas
+            fullquery = 'select %s from %s where %s' % \
+                (fieldlist, tablelist, clauselist)
+            cur = self.con.execute(fullquery)
+            rows = [row for row in cur]
+            return rows, wordids
+        except:
+            print "Error en la base de datos o frase no encontrada"
 
-        # Crear la consulta a partir de las partes separadas
-        fullquery = 'select %s from %s where %s' % (fieldlist, tablelist, clauselist)
-        cur = self.con.execute(fullquery)
-        rows = [row for row in cur]
-
-        return rows, wordids
 
     def getscoredlist(self, rows, wordids):
         totalscores = dict([(row[0],0) for row in rows])
