@@ -1,3 +1,3 @@
 # Máquinas de búsqueda
 
-En este repositorio se explorarán algoritmos de *ranking* utilizados en motores de búsqueda como parte de la asignatura *Tópicos avanzados en inteligencia artificial*.
+Hasta ahora he estado leyendo el articulo desde cero para entenderlo bien y haciendolo a como puedo (nada de magia de mi parte, es el codigo del articulo hasta ahora).
