@@ -65,36 +65,48 @@ class crawler:
                                         % (table, column, value))
         return table.lastrowid
 
-    # Indexar una página
-    def index_page(self, url, html):
-        if self.is_indexed(url):
-            return
-        print 'Indexing ' + url
+    def index_page_words(self, url_id, words):
+        """
+        url_id es un id de la base de datos que está asociada a una página web
 
-        # Obtener las palabras individuales
-        text = self.strip_html_tags(html)
-        words = self.separate_words(text)
+        words es una lista de palabras
 
-        # Obtener la id de la URL
-        url_id = self.select_entry_id("urllist", "url", url)
-
-        if url_id is None:
-            self.insert_entry("urllist", "url", url)
-            url_id = self.select_entry_id("urllist", "url", url)
-
-        # Enlazar cada palabra con esta URL
+        relaciona las palabras con la url en la base de datos
+        """
+        print "      INDEXING WORDS FROM URL ID %s" % url_id
         for i in range(len(words)):
             word = words[i]
             if word in ignore_words:
                 continue
             word_id = self.select_entry_id("wordlist", "word", word)
-
             if word_id is None:
+                print "        %s" % word
                 self.insert_entry("wordlist", "word", word)
                 word_id = self.select_entry_id("wordlist", "word", word)
+                self.connection.execute("insert into wordlocation(urlid, wordid, location) values (%d,%d,%d)"
+                                        % (url_id, word_id, i))
 
-            self.connection.execute("insert into wordlocation(urlid, wordid, location) values (%d,%d,%d)"
-                                    % (url_id, word_id, i))
+    def index_page(self, url, html):
+        """
+        url es una cadena de caracteres que representa una URL
+
+        html es un objeto BeautifulSoup
+
+        procesa el documento de HTML para relacionar las palabras en el
+        documento con la URL
+        """
+        if self.is_indexed(url):
+            return
+        print "    INDEXING %s" % url
+        text = self.strip_html_tags(html)
+        words = self.separate_words(text)
+
+        url_id = self.select_entry_id("urllist", "url", url)
+        if url_id is None:
+            self.insert_entry("urllist", "url", url)
+            url_id = self.select_entry_id("urllist", "url", url)
+            self.index_page_words(url_id, words)
+            print "      INDEXED! %s" % url
 
     # Extraer el texto de una página de HTML (sin etiquetas)
     def strip_html_tags(self, html):
