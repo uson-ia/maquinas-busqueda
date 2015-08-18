@@ -6,64 +6,64 @@ from urlparse import urljoin
 from sqlite3 import dbapi2 as sqlite
 import re
 
-ignorewords = set(['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it'])
+ignore_words = set(['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it'])
 
 class crawler:
     # Inicializa el crawler con el nombre de la base de datos
-    def __init__(self, dbname):
-        self.con = sqlite.connect(dbname)
+    def __init__(self, db_name):
+        self.connection = sqlite.connect(db_name)
 
     def __del__(self):
-        self.con.close()
+        self.connection.close()
 
     def db_commit(self):
-        self.con.commit()
+        self.connection.commit()
 
     # Función auxiliar para obtener la id de una entrada y añadirla
     # si no está presente
-    def getentryid(self, table, field, value, createnew=True):
-        cur = self.con.execute("select rowid from %s where %s = '%s'" % (table, field, value))
-        res = cur.fetchone()
-        if res == None:
-            cur = self.con.execute("insert into %s (%s) values ('%s')" % (table, field, value))
-            return cur.lastrowid
+    def getentryid(self, table, column, value, create_new=True):
+        table = self.connection.execute("select rowid from %s where %s = '%s'" % (table, column, value))
+        result = table.fetchone()
+        if result == None:
+            table = self.connection.execute("insert into %s (%s) values ('%s')" % (table, column, value))
+            return table.lastrowid
         else:
-            return res[0]
+            return result[0]
 
     # Indexar una página
-    def index_page(self, url, soup):
+    def index_page(self, url, html):
         if self.is_indexed(url):
             return
         print 'Indexing ' + url
 
         # Obtener las palabras individuales
-        text = self.strip_html_tags(soup)
+        text = self.strip_html_tags(html)
         words = self.separate_words(text)
 
         # Obtener la id de la URL
-        urlid = self.getentryid('urllist', 'url', url)
+        url_id = self.getentryid('urllist', 'url', url)
 
         # Enlazar cada palabra con esta URL
         for i in range(len(words)):
             word = words[i]
-            if word in ignorewords:
+            if word in ignore_words:
                 continue
-            wordid = self.getentryid('wordlist', 'word', word)
-            self.con.execute("insert into wordlocation(urlid, wordid, location) values (%d,%d,%d)"
-                             % (urlid, wordid, i))
+            word_id = self.getentryid('wordlist', 'word', word)
+            self.connection.execute("insert into wordlocation(urlid, wordid, location) values (%d,%d,%d)"
+                             % (url_id, word_id, i))
 
     # Extraer el texto de una página de HTML (sin etiquetas)
-    def strip_html_tags(self, soup):
-        v = soup.string
-        if v == None:
-            c = soup.contents
-            resulttext = ''
-            for t in c:
-                subtext = self.strip_html_tags(t)
-                resulttext += subtext + '\n'
-            return resulttext
+    def strip_html_tags(self, html):
+        html_inside_tag = html.string
+        if html_inside_tag == None:
+            contents = html.contents
+            resulting_text = ''
+            for tag in contents:
+                sub_text = self.strip_html_tags(tag)
+                resulting_text += sub_text + '\n'
+            return resulting_text
         else:
-            return v.strip()
+            return html_inside_tag.strip()
 
     # Separar las palabras por un caracter que no sea espacio en blanco
     def separate_words(self, text):
@@ -72,71 +72,71 @@ class crawler:
 
     # Regresar True si la url dada ya ha sido indexada
     def is_indexed(self, url):
-        u = self.con.execute("select rowid from urllist where url='%s'" % url).fetchone()
-        if u != None:
+        result = self.connection.execute("select rowid from urllist where url='%s'" % url).fetchone()
+        if result != None:
             # Revisa si la url ya fué indexada
-            v = self.con.execute('select * from wordlocation where urlid = %d' % u[0]).fetchone()
-            if v != None:
+            url_id = self.connection.execute('select * from wordlocation where urlid = %d' % result[0]).fetchone()
+            if url_id != None:
                 return True
         return False
 
     # Agregar un enlace entre dos páginas
-    def index_link(self, urlFrom, urlTo, linkText):
-        fromid = self.getentryid('urllist', 'url', urlfrom)
-        toid = self.getentryid('urllist', 'url', urlto)
-        if fromid != toid: cur = self.con.execute('insert into link (fromid, toid) values (%d, %d)'% (fromid, toid))
+    def index_link(self, from_url, to_url, link_text):
+        from_url_id = self.getentryid('urllist', 'url', from_url)
+        to_url_id = self.getentryid('urllist', 'url', to_url)
+        if from_url_id != to_url_id: cur = self.connection.execute('insert into link (fromid, toid) values (%d, %d)'% (from_url_id, to_url_id))
 
 
     # Comenzando con una lista de páginas, hacer una búsqueda a lo ancho
     # a una profundidad dada, indexando las páginas en el proceso
-    def crawl(self, pages, depth=2):
+    def crawl(self, urls, depth=2):
         for i in range(depth):
-            newpages = set()
-            for page in pages:
+            new_urls = set()
+            for url in urls:
                 try:
-                    c = urllib2.urlopen(page)
+                    c = urllib2.urlopen(url)
                 except:
-                    print "Could not open %s" % page
+                    print "Could not open %s" % url
                     continue
-                soup = BeautifulSoup(c.read().decode("ascii", "ignore"))
-                self.index_page(page, soup)
+                html = BeautifulSoup(c.read().decode("ascii", "ignore"))
+                self.index_page(url, html)
 
-                links = soup('a')
+                links = html('a')
                 for link in links:
                     if ('href' in dict(link.attrs)):
-                        url = urljoin(page, link['href'])
-                        if url.find("'") != -1:
+                        ref_url = urljoin(url, link['href'])
+                        if ref_url.find("'") != -1:
                             continue
-                        url = url.split('#')[0] # Remueve la parte de localización
-                        if url[0:4] == 'http' and not self.is_indexed(url):
-                            newpages.add(url)
-                        linkText = self.strip_html_tags(link)
-                        self.index_link(page, url, linkText)
+                        ref_url = url.split('#')[0] # Remueve la parte de localización
+                        if ref_url[0:4] == 'http' and not self.is_indexed(ref_url):
+                            new_urls.add(ref_url)
+                        link_text = self.strip_html_tags(link)
+                        self.index_link(url, ref_url, link_text)
 
                 self.db_commit()
 
-            pages = newpages
+            urls = new_urls
 
     # Crear las tablas de base de datos
     def db_create_tables(self):
-        self.con.execute('create table urllist(url)')
-        self.con.execute('create table wordlist(word)')
-        self.con.execute('create table wordlocation(urlid, wordid, location)')
-        self.con.execute('create table link(fromid integer, toid integer)')
-        self.con.execute('create table linkwords(wordid, linkid)')
-        self.con.execute('create index wordidx on wordlist(word)')
-        self.con.execute('create index urlidx on urllist(url)')
-        self.con.execute('create index wordurlidx on wordlocation(wordid)')
-        self.con.execute('create index urltoidx on link(toid)')
-        self.con.execute('create index urlfromidx on link(fromid)')
+        self.connection.execute('create table urllist(url)')
+        self.connection.execute('create table wordlist(word)')
+        self.connection.execute('create table wordlocation(urlid, wordid, location)')
+        self.connection.execute('create table link(fromid integer, toid integer)')
+        self.connection.execute('create table linkwords(wordid, linkid)')
+        self.connection.execute('create index wordidx on wordlist(word)')
+        self.connection.execute('create index urlidx on urllist(url)')
+        self.connection.execute('create index wordurlidx on wordlocation(wordid)')
+        self.connection.execute('create index urltoidx on link(toid)')
+        self.connection.execute('create index urlfromidx on link(fromid)')
         self.db_commit()
 
 class searcher:
-    def __init__(self, dbname):
-        self.con = sqlite.connect(dbname)
+    def __init__(self, db_name):
+        self.connection = sqlite.connect(db_name)
 
     def __del__(self):
-        self.con.close()
+        self.connection.close()
 
     def getmatchrows(self, q):
         # Cadenas para construír la consulta
@@ -151,7 +151,7 @@ class searcher:
 
         for word in words:
             # Obtener el ID de la palabra
-            wordrow = self.con.execute("select rowid from wordlist where word = '%s'" % word).fetchone()
+            wordrow = self.connection.execute("select rowid from wordlist where word = '%s'" % word).fetchone()
             if wordrow != None:
                 wordid = wordrow[0]
                 wordids.append(wordid)
@@ -167,7 +167,7 @@ class searcher:
             # Crear la consulta a partir de las partes separadas
             fullquery = 'select %s from %s where %s' % \
                 (fieldlist, tablelist, clauselist)
-            cur = self.con.execute(fullquery)
+            cur = self.connection.execute(fullquery)
             rows = [row for row in cur]
             return rows, wordids
         except:
@@ -196,7 +196,7 @@ class searcher:
         return totalscores
 
     def geturlname(self, id):
-        return self.con.execute("select url from urllist where rowid = %d" % id).fetchone()[0]
+        return self.connection.execute("select url from urllist where rowid = %d" % id).fetchone()[0]
 
     def query(self, q):
         rows, wordids = self.getmatchrows(q)
@@ -243,6 +243,6 @@ class searcher:
 
     def inboundlinkscore(self, rows):
         uniqueurls = set([row[0] for row in rows])
-        inboundcount = dict([(u, self.con.execute("select count(*) from link where toid=%d" % u).fetchone()[0])
+        inboundcount = dict([(u, self.connection.execute("select count(*) from link where toid=%d" % u).fetchone()[0])
                              for u in uniqueurls])
         return self.normalizescores(inboundcount)
