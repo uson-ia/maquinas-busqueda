@@ -1,11 +1,11 @@
 # Pruebas
 
-Esta carpeta sirve para hacer pruebas con el código de `searchengine.py`, en el archivo `borrador.py` se encontrará la implementación de cada método como función, es decir, no son miembros de una clase.
+Esta carpeta sirve para hacer pruebas con el código de `searchengine.py`, en el archivo `crawler.py` se encontrará la implementación de cada método relacionado con el indexado como función, es decir, no son miembros de una clase.
 
 Para probar el código por primera vez, se sugiere escribir los siguientes comandos en el REPL de ipython:
 
 ```
-In [1]: from borrador import *
+In [1]: from crawler import *
 
 In [2]: connection = db_connect(test_db)
 
