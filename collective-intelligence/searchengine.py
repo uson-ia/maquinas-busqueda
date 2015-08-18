@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import urllib2
-from BeautifulSoup import *
+from bs4 import *
 from urlparse import urljoin
-from pysqlite2 import dbapi2 as sqlite
+from sqlite3 import dbapi2 as sqlite
+import re
 
 ignorewords = set(['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it'])
 
@@ -15,7 +16,7 @@ class crawler:
     def __del__(self):
         self.con.close()
 
-    def dbcommit(self):
+    def db_commit(self):
         self.con.commit()
 
     # Función auxiliar para obtener la id de una entrada y añadirla
@@ -30,14 +31,14 @@ class crawler:
             return res[0]
 
     # Indexar una página
-    def addtoindex(self, url, soup):
-        if self.isindexed(url):
+    def index_page(self, url, soup):
+        if self.is_indexed(url):
             return
         print 'Indexing ' + url
 
         # Obtener las palabras individuales
-        text = self.gettextonly(soup)
-        words = self.separatewords(text)
+        text = self.strip_html_tags(soup)
+        words = self.separate_words(text)
 
         # Obtener la id de la URL
         urlid = self.getentryid('urllist', 'url', url)
@@ -52,25 +53,25 @@ class crawler:
                              % (urlid, wordid, i))
 
     # Extraer el texto de una página de HTML (sin etiquetas)
-    def gettextonly(self, soup):
+    def strip_html_tags(self, soup):
         v = soup.string
         if v == None:
             c = soup.contents
             resulttext = ''
             for t in c:
-                subtext = self.gettextonly(t)
+                subtext = self.strip_html_tags(t)
                 resulttext += subtext + '\n'
             return resulttext
         else:
             return v.strip()
 
     # Separar las palabras por un caracter que no sea espacio en blanco
-    def separatewords(self, text):
+    def separate_words(self, text):
         splitter = re.compile('\\W*')
         return [s.lower() for s in splitter.split(text) if s != '']
 
     # Regresar True si la url dada ya ha sido indexada
-    def isindexed(self, url):
+    def is_indexed(self, url):
         u = self.con.execute("select rowid from urllist where url='%s'" % url).fetchone()
         if u != None:
             # Revisa si la url ya fué indexada
@@ -80,7 +81,7 @@ class crawler:
         return False
 
     # Agregar un enlace entre dos páginas
-    def addlinkref(self, urlFrom, urlTo, linkText):
+    def index_link(self, urlFrom, urlTo, linkText):
         fromid = self.getentryid('urllist', 'url', urlfrom)
         toid = self.getentryid('urllist', 'url', urlto)
         if fromid != toid: cur = self.con.execute('insert into link (fromid, toid) values (%d, %d)'% (fromid, toid))
@@ -98,7 +99,7 @@ class crawler:
                     print "Could not open %s" % page
                     continue
                 soup = BeautifulSoup(c.read().decode("ascii", "ignore"))
-                self.addtoindex(page, soup)
+                self.index_page(page, soup)
 
                 links = soup('a')
                 for link in links:
@@ -107,17 +108,17 @@ class crawler:
                         if url.find("'") != -1:
                             continue
                         url = url.split('#')[0] # Remueve la parte de localización
-                        if url[0:4] == 'http' and not self.isindexed(url):
+                        if url[0:4] == 'http' and not self.is_indexed(url):
                             newpages.add(url)
-                        linkText = self.gettextonly(link)
-                        self.addlinkref(page, url, linkText)
+                        linkText = self.strip_html_tags(link)
+                        self.index_link(page, url, linkText)
 
-                self.dbcommit()
+                self.db_commit()
 
             pages = newpages
 
     # Crear las tablas de base de datos
-    def createindextables(self):
+    def db_create_tables(self):
         self.con.execute('create table urllist(url)')
         self.con.execute('create table wordlist(word)')
         self.con.execute('create table wordlocation(urlid, wordid, location)')
@@ -128,7 +129,7 @@ class crawler:
         self.con.execute('create index wordurlidx on wordlocation(wordid)')
         self.con.execute('create index urltoidx on link(toid)')
         self.con.execute('create index urlfromidx on link(fromid)')
-        self.dbcommit()
+        self.db_commit()
 
 class searcher:
     def __init__(self, dbname):
