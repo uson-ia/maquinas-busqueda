@@ -6,7 +6,13 @@ from urlparse import urljoin
 from sqlite3 import dbapi2 as sqlite
 import re
 
-ignore_words = set(['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it'])
+test_urls    = ["http://eduardoacye.github.io"]
+test_db      = "searchindex.db"
+ignore_words = set([line.strip() for line in
+                    open("stop-words/stop-words_spanish_1_es.txt", "r")]
+                   +
+                   [line.strip() for line in
+                    open("stop-words/stop-words_spanish_2_es.txt", "r")])
 
 class crawler:
     # Inicializa el crawler con el nombre de la base de datos
@@ -19,16 +25,45 @@ class crawler:
     def db_commit(self):
         self.connection.commit()
 
-    # Función auxiliar para obtener la id de una entrada y añadirla
-    # si no está presente
-    def getentryid(self, table, column, value, create_new=True):
-        table = self.connection.execute("select rowid from %s where %s = '%s'" % (table, column, value))
+    def select_entry_id(self, table, column, value):
+        """
+        table es una cadena de caracteres que representa el nombre de una tabla de
+        la base de datos
+        
+        column es una cadena de caracteres que representa el nombre de una columna
+        de la tabla especificada de la base de datos
+        
+        value es un valor que puede estar almacenado en la columna especificada de
+        la tabla especificada de la base de datos
+        
+        regresa None si no se encontró una entrada con el valor en la columna de la
+        tabla, de lo contrario se regresa el id de la entrada
+        """
+        table = self.connection.execute("select rowid from %s where %s = '%s'"
+                                        % (table, column, value))
         result = table.fetchone()
-        if result == None:
-            table = self.connection.execute("insert into %s (%s) values ('%s')" % (table, column, value))
-            return table.lastrowid
+        if result is None:
+            return result
         else:
             return result[0]
+
+    def insert_entry(self, table, column, value):
+        """
+        table es una cadena de caracteres que representa el nombre de una tabla de
+        la base de datos
+        
+        column es una cadena de caracteres que representa el nombre de una columna
+        de la tabla especificada de la base de datos
+        
+        value es un valor que puede estar almacenado en la columna especificada de
+        la tabla especificada de la base de datos
+        
+        crea una nueva entrada en la tabla especificada con el valor dado en la columna
+        especificada
+        """
+        table = self.connection.execute("insert into %s (%s) values ('%s')"
+                                        % (table, column, value))
+        return table.lastrowid
 
     # Indexar una página
     def index_page(self, url, html):
@@ -41,16 +76,25 @@ class crawler:
         words = self.separate_words(text)
 
         # Obtener la id de la URL
-        url_id = self.getentryid('urllist', 'url', url)
+        url_id = self.select_entry_id("urllist", "url", url)
+
+        if url_id is None:
+            self.insert_entry("urllist", "url", url)
+            url_id = self.select_entry_id("urllist", "url", url)
 
         # Enlazar cada palabra con esta URL
         for i in range(len(words)):
             word = words[i]
             if word in ignore_words:
                 continue
-            word_id = self.getentryid('wordlist', 'word', word)
+            word_id = self.select_entry_id("wordlist", "word", word)
+
+            if word_id is None:
+                self.insert_entry("wordlist", "word", word)
+                word_id = self.select_entry_id("wordlist", "word", word)
+
             self.connection.execute("insert into wordlocation(urlid, wordid, location) values (%d,%d,%d)"
-                             % (url_id, word_id, i))
+                                    % (url_id, word_id, i))
 
     # Extraer el texto de una página de HTML (sin etiquetas)
     def strip_html_tags(self, html):
@@ -82,9 +126,18 @@ class crawler:
 
     # Agregar un enlace entre dos páginas
     def index_link(self, from_url, to_url, link_text):
-        from_url_id = self.getentryid('urllist', 'url', from_url)
-        to_url_id = self.getentryid('urllist', 'url', to_url)
-        if from_url_id != to_url_id: cur = self.connection.execute('insert into link (fromid, toid) values (%d, %d)'% (from_url_id, to_url_id))
+        from_url_id = self.select_entry_id("urllist", "url", from_url)
+        if from_url_id is None:
+            self.insert_entry("urllist", "url", from_url)
+            from_url_id = self.select_entry_id("urllist", "url", from_url)
+
+        to_url_id = self.select_entry_id("urllist", "url", to_url)
+        if to_url_id is None:
+            self.insert_entry("urllist", "url", to_url)
+            to_url_id = self.select_entry_id("urllist", "url", to_url)
+
+        if from_url_id != to_url_id: cur = self.connection.execute('insert into link (fromid, toid) values (%d, %d)'
+                                                                   % (from_url_id, to_url_id))
 
 
     # Comenzando con una lista de páginas, hacer una búsqueda a lo ancho
