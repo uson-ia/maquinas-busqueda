@@ -29,13 +29,13 @@ class crawler:
         """
         table es una cadena de caracteres que representa el nombre de una tabla de
         la base de datos
-        
+
         column es una cadena de caracteres que representa el nombre de una columna
         de la tabla especificada de la base de datos
-        
+
         value es un valor que puede estar almacenado en la columna especificada de
         la tabla especificada de la base de datos
-        
+
         regresa None si no se encontró una entrada con el valor en la columna de la
         tabla, de lo contrario se regresa el id de la entrada
         """
@@ -51,13 +51,13 @@ class crawler:
         """
         table es una cadena de caracteres que representa el nombre de una tabla de
         la base de datos
-        
+
         column es una cadena de caracteres que representa el nombre de una columna
         de la tabla especificada de la base de datos
-        
+
         value es un valor que puede estar almacenado en la columna especificada de
         la tabla especificada de la base de datos
-        
+
         crea una nueva entrada en la tabla especificada con el valor dado en la columna
         especificada
         """
@@ -121,10 +121,15 @@ class crawler:
         else:
             return html_inside_tag.strip()
 
-    # Separar las palabras por un caracter que no sea espacio en blanco
     def separate_words(self, text):
-        splitter = re.compile('\\W*')
-        return [s.lower() for s in splitter.split(text) if s != '']
+        """
+        text es una cadena unicode que representa algún texto
+
+        regresa una lista con las palabras del texto
+        """
+        splitter = re.compile(ur"\W*", re.UNICODE)
+        splitted = splitter.split(text)
+        return [s.lower() for s in splitted if s != ""]
 
     # Regresar True si la url dada ya ha sido indexada
     def is_indexed(self, url):
