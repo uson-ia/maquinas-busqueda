@@ -29,13 +29,31 @@ def get_page(url):
     return content, encoding
 
 def parse_page(content):
+    """
+    content es una cadena unicode cuyo contenido son los caracteres que conforman
+    a una página en HTML
+
+    regresa un objeto BeautifulSoup que representa el HTML parseado
+    """
     html_tree = BeautifulSoup(content)
     return html_tree
 
 def has_href(link):
+    """
+    link es un objeto BeautifulSoup.Tag
+
+    regresa un booleano determinando si el enlace contiene un atributo href
+    """
     return "href" in link.attrs
 
 def link_url(base_url, link):
+    """
+    base_url es una cadena de caracteres que representa una URL
+
+    link es un objeto BeautifulSoup.Tag
+
+    regresa una cadena de caracteres que representa la URL del enlace
+    """
     url = urljoin(base_url, link["href"])
     if url.find("'") != -1:
         raise Exception("Malformed URL %s" % url)
@@ -43,18 +61,46 @@ def link_url(base_url, link):
     return url
 
 def is_http(url):
+    """
+    url es una cadena de caracteres que representa una URL
+
+    regresa un booleano determinando si el recurso web que indica la URL es
+    una página web
+    """
     return url[0:4] == "http"
 
 def db_connect(db_name):
+    """
+    db_name es una cadena de caracteres que representa el nombre de la base de
+    una base de datos
+
+    regresa una conexión a la base de datos especificada por el nombre
+    """
     return sqlite.connect(db_name)
 
 def db_close(connection):
+    """
+    connection es un objeto obtenido con una llamada a db_connect
+
+    cierra la conexión con la base de datos
+    """
     connection.close()
 
 def db_commit(connection):
+    """
+    connection es un objeto obtenido con una llamada a db_connect
+
+    guarda en la base de datos los cambios realizados
+    """
     connection.commit()
 
 def db_create_tables(connection):
+    """
+    connection es un objeto obtenido con una llamada a db_connect
+
+    crea las tablas de la base de datos correspondientes a la funcionalidad
+    del crawler
+    """
     connection.execute("create table urllist(url)")
     connection.execute("create table wordlist(word)")
     connection.execute("create table wordlocation(urlid, wordid, location)")
@@ -68,10 +114,23 @@ def db_create_tables(connection):
     db_commit(connection)
 
 def db_get_table(connection, table):
+    """
+    connection es un objeto obtenido con una llamada a db_connect
+
+    table es una cadena de caracteres que representa el nombre de la tabla
+    en la base de datos
+
+    regresa una lista con el contenido de la tabla especificada
+    """
     table = connection.execute("select * from %s" % table)
     return table.fetchall()
 
 def db_get_tables(connection):
+    """
+    connection es un objeto obtenido con una llamada a db_connect
+
+    regresa una tupla con listas con el contenido de cada tabla en la base de datos
+    """
     return (db_get_table(connection, "urllist"),
             db_get_table(connection, "wordlist"),
             db_get_table(connection, "wordlocation"),
@@ -80,6 +139,13 @@ def db_get_tables(connection):
 
 
 def is_indexed(connection, url):
+    """
+    connection es un objeto obtenido con una llamada a db_connect
+
+    url es una cadena de caracteres que representa una URL
+
+    regresa un booleano que determina si la URL ya fué inspeccionada por el crawler
+    """
     table = connection.execute("select rowid from urllist where url='%s'" % url)
     result = table.fetchone()
     if result is not None:
@@ -90,6 +156,11 @@ def is_indexed(connection, url):
     return False
 
 def strip_html_tags(html):
+    """
+    html es un objeto BeautifulSoup
+
+    regresa una cadena unicode con el contenido del HTML sin las etiquetas
+    """
     html_inside_tag = html.string
     if html_inside_tag is None:
         resulting_text = ""
@@ -101,11 +172,31 @@ def strip_html_tags(html):
         return html_inside_tag.strip()
 
 def separate_words(text):
+    """
+    text es una cadena unicode que representa algún texto
+
+    regresa una lista con las palabras del texto
+    """
     splitter = re.compile(ur"\W*", re.UNICODE)
     splitted = splitter.split(text)
     return [s.lower() for s in splitted if s != ""]
 
 def select_entry_id(connection, table, column, value):
+    """
+    connection es un obteto obtenido con una llamada a db_connect
+
+    table es una cadena de caracteres que representa el nombre de una tabla de
+    la base de datos
+
+    column es una cadena de caracteres que representa el nombre de una columna
+    de la tabla especificada de la base de datos
+
+    value es un valor que puede estar almacenado en la columna especificada de
+    la tabla especificada de la base de datos
+
+    regresa None si no se encontró una entrada con el valor en la columna de la
+    tabla, de lo contrario se regresa el id de la entrada
+    """
     table = connection.execute("select rowid from %s where %s = '%s'"
                                % (table, column, value))
     result = table.fetchone()
@@ -115,11 +206,35 @@ def select_entry_id(connection, table, column, value):
         return result[0]
 
 def insert_entry(connection, table, column, value):
+    """
+    connection es un obteto obtenido con una llamada a db_connect
+
+    table es una cadena de caracteres que representa el nombre de una tabla de
+    la base de datos
+
+    column es una cadena de caracteres que representa el nombre de una columna
+    de la tabla especificada de la base de datos
+
+    value es un valor que puede estar almacenado en la columna especificada de
+    la tabla especificada de la base de datos
+
+    crea una nueva entrada en la tabla especificada con el valor dado en la columna
+    especificada
+    """
     table = connection.execute("insert into %s (%s) values ('%s')"
                                % (table, column, value))
     return table.lastrowid
 
 def index_page_words(connection, url_id, words):
+    """
+    connection es un objeto obtenido con una llamada a db_connect
+
+    url_id es un id de la base de datos que está asociada a una página web
+
+    words es una lista de palabras
+
+    relaciona las palabras con la url en la base de datos
+    """
     print "      INDEXING WORDS FROM URL ID %s" % url_id
     for i in range(len(words)):
         word = words[i]
@@ -134,6 +249,16 @@ def index_page_words(connection, url_id, words):
                            % (url_id, word_id, i))
 
 def index_page(connection, url, html):
+    """
+    connection es un objeto obtenido con una llamada a db_connect
+
+    url es una cadena de caracteres que representa una URL
+
+    html es un objeto BeautifulSoup
+
+    procesa el documento de HTML para relacionar las palabras en el
+    documento con la URL
+    """
     if is_indexed(connection, url):
         return
     print "    INDEXING %s" % url
@@ -148,6 +273,15 @@ def index_page(connection, url, html):
     print "      INDEXED! %s" % url
 
 def index_link_words(connection, link_id, words):
+    """
+    connection es un objeto obtenido con una llamada a db_connect
+
+    link_id es un id de la base de datos que está asociada a enlace
+
+    words es una lista de palabras
+
+    relaciona las palabras con el enlace en la base de datos
+    """
     for word in words:
         if word in ignore_words:
             continue
@@ -160,6 +294,18 @@ def index_link_words(connection, link_id, words):
                            % (word_id, link_id))
 
 def index_link(connection, from_url, to_url, link):
+    """
+    connection es un objeto obtenido con una llamada a db_connect
+
+    from_url es una cadena de caracteres que representa una URL
+
+    to_url es una cadena de caracteres que representa una URL
+
+    link es un objeto BeautifulSoup.Tag
+
+    procesa la etiqueta de HTML <a...>...</a> para relacionar las palabras en el
+    enlace con las URLs involucradas
+    """
     text = strip_html_tags(link)
     words = separate_words(text)
 
@@ -180,6 +326,15 @@ def index_link(connection, from_url, to_url, link):
     index_link_words(connection, link_id, words)
 
 def crawl(urls, connection, depth=2):
+    """
+    urls es una lista de cadenas de caracteres que representan URLs
+
+    connection es un objeto obtenido con una llamada db_connect
+
+    depth es un entero positivo que representa la profundidad a la que
+    se procesarán las páginas (similar a la profundidad de una búsqueda
+    en grafos)
+    """
     print "CRAWL"
     for i in range(depth):
         print "  DEPTH %d" % i
