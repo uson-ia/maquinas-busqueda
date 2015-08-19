@@ -146,20 +146,54 @@ class crawler:
                 return True
         return False
 
-    # Agregar un enlace entre dos páginas
-    def index_link(self, from_url, to_url, link_text):
+    def index_link_words(link_id, words):
+        """
+        link_id es un id de la base de datos que está asociada a enlace
+
+        words es una lista de palabras
+
+        relaciona las palabras con el enlace en la base de datos
+        """
+        for word in words:
+            if word in ignore_words:
+                continue
+            word_id = self.select_entry_id("wordlist", "word", word)
+            if word_id is None:
+                print "        PALABRA %s" % word
+                self.insert_entry("wordlist", "word", word)
+                word_id = self.select_entry_id("wordlist", "word", word)
+            self.connection.execute("insert into linkwords(wordid, linkid) values (%d,%d)"
+                                    % (word_id, link_id))
+
+    def index_link(from_url, to_url, link):
+        """
+        from_url es una cadena de caracteres que representa una URL
+
+        to_url es una cadena de caracteres que representa una URL
+
+        link es un objeto BeautifulSoup.Tag
+
+        procesa la etiqueta de HTML <a...>...</a> para relacionar las palabras en el
+        enlace con las URLs involucradas
+        """
+        text  = self.strip_html_tags(link)
+        words = self.separate_words(text)
+
         from_url_id = self.select_entry_id("urllist", "url", from_url)
         if from_url_id is None:
             self.insert_entry("urllist", "url", from_url)
             from_url_id = self.select_entry_id("urllist", "url", from_url)
-
         to_url_id = self.select_entry_id("urllist", "url", to_url)
         if to_url_id is None:
             self.insert_entry("urllist", "url", to_url)
             to_url_id = self.select_entry_id("urllist", "url", to_url)
 
-        if from_url_id != to_url_id: cur = self.connection.execute('insert into link (fromid, toid) values (%d, %d)'
-                                                                   % (from_url_id, to_url_id))
+        if from_url_id == to_url_id:
+            return
+        table = self.connection.execute("insert into link (fromid, toid) values (%d,%d)"
+                                        % (from_url_id, to_url_id))
+        link_id = table.lastrowid
+        self.index_link_words(link_id, words)
 
     def get_page(self, url):
         """
@@ -240,8 +274,7 @@ class crawler:
                         ref_url = self.link_url(url, link)
                         if self.is_http(ref_url) and not self.is_indexed(ref_url):
                             new_urls.add(ref_url)
-                        link_text = self.strip_html_tags(link)
-                        self.index_link(url, ref_url, link_text)
+                        self.index_link(url, ref_url, link)
 
                 self.db_commit()
 
