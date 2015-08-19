@@ -185,24 +185,60 @@ class crawler:
         html_tree = BeautifulSoup(content)
         return html_tree
 
-    # Comenzando con una lista de páginas, hacer una búsqueda a lo ancho
-    # a una profundidad dada, indexando las páginas en el proceso
+    def has_href(self, link):
+        """
+        link es un objeto BeautifulSoup.Tag
+
+        regresa un booleano determinando si el enlace contiene un atributo href
+        """
+        return "href" in link.attrs
+
+    def link_url(self, base_url, link):
+        """
+        base_url es una cadena de caracteres que representa una URL
+
+        link es un objeto BeautifulSoup.Tag
+
+        regresa una cadena de caracteres que representa la URL del enlace
+        """
+        url = urljoin(base_url, link["href"])
+        if url.find("'") != -1:
+            raise Exception("Malformed URL %s" % url)
+        url = url.split("#")[0]
+        return url
+
+    def is_http(self, url):
+        """
+        url es una cadena de caracteres que representa una URL
+
+        regresa un booleano determinando si el recurso web que indica la URL es
+        una página web
+        """
+        return url[0:4] == "http"
+
     def crawl(self, urls, depth=2):
+        """
+        urls es una lista de cadenas de caracteres que representan URLs
+
+        depth es un entero positivo que representa la profundidad a la que
+        se procesarán las páginas (similar a la profundidad de una búsqueda
+        en grafos)
+        """
+        print "CRAWL"
         for i in range(depth):
+            print "  DEPTH %d" % i
             new_urls = set()
             for url in urls:
                 content, encoding = self.get_page(url)
                 html = self.parse_page(content)
+                print "    VISITED %s" % url
                 self.index_page(url, html)
 
-                links = html('a')
+                links = html.select("a")
                 for link in links:
-                    if ('href' in dict(link.attrs)):
-                        ref_url = urljoin(url, link['href'])
-                        if ref_url.find("'") != -1:
-                            continue
-                        ref_url = url.split('#')[0] # Remueve la parte de localización
-                        if ref_url[0:4] == 'http' and not self.is_indexed(ref_url):
+                    if self.has_href(link):
+                        ref_url = self.link_url(url, link)
+                        if self.is_http(ref_url) and not self.is_indexed(ref_url):
                             new_urls.add(ref_url)
                         link_text = self.strip_html_tags(link)
                         self.index_link(url, ref_url, link_text)
