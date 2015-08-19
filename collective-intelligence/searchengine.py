@@ -278,6 +278,7 @@ class crawler:
                         if self.is_http(ref_url) and not self.is_indexed(ref_url):
                             new_urls.add(ref_url)
                         self.index_link(url, ref_url, link)
+                self.db_commit()
             urls = list(new_urls)
 
     # Crear las tablas de base de datos
@@ -293,6 +294,26 @@ class crawler:
         self.connection.execute('create index urltoidx on link(toid)')
         self.connection.execute('create index urlfromidx on link(fromid)')
         self.db_commit()
+
+    def db_get_table(self, table):
+        """
+        table es una cadena de caracteres que representa el nombre de la tabla
+        en la base de datos
+
+        regresa una lista con el contenido de la tabla especificada
+        """
+        table = self.connection.execute("select * from %s" % table)
+        return table.fetchall()
+
+    def db_get_tables(self, connection):
+        """
+        regresa una tupla con listas con el contenido de cada tabla en la base de datos
+        """
+        return (self, db_get_table("urllist"),
+                self, db_get_table("wordlist"),
+                self, db_get_table("wordlocation"),
+                self, db_get_table("link"),
+                self, db_get_table("linkwords"))
 
 class searcher:
     def __init__(self, db_name):
@@ -326,6 +347,10 @@ class searcher:
                 table_number += 1
 
         full_query = "select %s from %s where %s" % (field_list, table_list, clause_list)
+        print "BEGIN FULL QUERY"
+        print full_query
+        print "END FULL QUERY"
+
         table = self.connection.execute(full_query)
         rows = [row for row in table]
 
