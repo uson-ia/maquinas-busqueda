@@ -206,9 +206,30 @@ class crawler:
         try:
             resource = urllib2.urlopen(url)
         except:
-            raise Exception("Could not open %s" % url)
-        encoding = resource.headers["content-type"].split("charset=")[-1]
-        content = unicode(resource.read(), encoding)
+            #raise Exception("Could not open %s" % url)
+            return None, None
+        content_type = resource.headers["content-type"]
+
+        if content_type[:9] != "text/html":
+            return None, None
+
+        charset_idx = content_type.find("charset")
+        try:
+            if charset_idx == -1:
+                data = resource.read()
+                charset_idx = data.find("charset=")
+                if charset_idx == -1:
+                    encoding = "ascii"
+                    content = unicode(data, encoding)
+                else:
+                    encoding = re.split(";|\"", data[charset_idx+8:])[0]
+                    content = unicode(data, encoding)
+            else:
+                encoding = content_type[charset_idx+8:].split(";")[0]
+                content = unicode(resource.read(), encoding)
+                #encoding = content_type.split("charset=")[-1]
+        except:
+            return None, None
         return content, encoding
 
     def parse_page(self, content):
@@ -239,7 +260,8 @@ class crawler:
         """
         url = urljoin(base_url, link["href"])
         if url.find("'") != -1:
-            raise Exception("Malformed URL %s" % url)
+            #raise Exception("Malformed URL %s" % url)
+            return None
         url = url.split("#")[0]
         return url
 
@@ -266,7 +288,10 @@ class crawler:
             new_urls = set()
             print "  URLs %s" % urls
             for url in urls:
+                print "  VISITING %s" % url
                 content, encoding = self.get_page(url)
+                if content is None and encoding is None:
+                    continue
                 html = self.parse_page(content)
                 print "    VISITED %s" % url
                 self.index_page(url, html)
@@ -275,6 +300,7 @@ class crawler:
                 for link in links:
                     if self.has_href(link):
                         ref_url = self.link_url(url, link)
+                        if ref_url is None: continue
                         if self.is_http(ref_url) and not self.is_indexed(ref_url):
                             new_urls.add(ref_url)
                         self.index_link(url, ref_url, link)
@@ -468,5 +494,5 @@ class searcher:
                                                  % from_url_id).fetchone()[0]
                     link_scores[to_url_id] += pr
         max_score = max(link_scores.values())
-        normalized_scores = dict([(u,float(l)/maxscore) for (u,l) in link_scores.items()])
+        normalized_scores = dict([(u,float(l)/max_score) for (u,l) in link_scores.items()])
         return normalized_scores
