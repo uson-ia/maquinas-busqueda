@@ -149,8 +149,8 @@ class searcher(object):
                 "select rowid from wordlist where word = '%s'" % word
             ).fetchone()
             if word_row is not None:
-                word_id = wordrow[0]
-                word_ids.append(wordid)
+                word_id = word_row[0]
+                word_ids.append(word_id)
                 if table_number > 0:
                     table_list += ','
                     clause_list += ' and '
@@ -181,12 +181,27 @@ class searcher(object):
         return total_scores
 
     def get_url_name(self, id):
-        return self.con.execute("select url from urllist where rowid = %d" % id).fetchone()[0]
+        return self.con.execute("select url from urllist \
+                                where rowid=%d" % id).fetchone()[0]
 
     def query(self, q):
         rows, word_ids = self.get_match_rows(q)
         scores = self.get_scored_list(rows, word_ids)
         ranked_scores = \
-            sorted([(score, url) for (url, score) in scores.items()], reverse=1)
+            sorted([(score, url) for (url, score) /
+                    in scores.items()], reverse=1)
         for (score, url_id) in ranked_scores[0:10]:
             print '%f\t%s' % (score, self.get_url_name(urlid))
+
+    def normalize_scores(self, scores, small_is_better=0):
+        v_small = 0.000001  # Con esto evitamos la division entre 0
+        if small_is_better:
+            min_score = min(scores.values())
+            return dict([(u, float(min_score) / max(v_small)) for (u, l) /
+                        in scores.items()])
+        else:
+            max_score = max(scores.values())
+            if max_score == 0:
+                max_score = v_small
+            return dict([(u, float(c) / max_score) for (u, c) /
+                        in scores.items()])
