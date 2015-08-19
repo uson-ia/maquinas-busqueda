@@ -301,41 +301,35 @@ class searcher:
     def __del__(self):
         self.connection.close()
 
-    def getmatchrows(self, q):
-        # Cadenas para construír la consulta
-        fieldlist = 'w0.urlid'
-        tablelist = ''
-        clauselist = ''
-        wordids = []
+    def get_matched_rows(self, search_query):
+        field_list  = "w0.urlid"
+        table_list  = ""
+        clause_list = ""
+        word_ids    = []
 
-        # Parte las palabras por espacios
-        words = q.split(' ')
-        tablenumber = 0
+        words = search_query.split()
+        table_number = 0
 
         for word in words:
-            # Obtener el ID de la palabra
-            wordrow = self.connection.execute("select rowid from wordlist where word = '%s'" % word).fetchone()
-            if wordrow != None:
-                wordid = wordrow[0]
-                wordids.append(wordid)
-                if tablenumber > 0:
-                    tablelist += ','
-                    clauselist += ' and '
-                    clauselist += 'w%d.urlid = w%d.urlid and ' % (tablenumber-1, tablenumber)
-                fieldlist += ',w%d.location' % tablenumber
-                tablelist += 'wordlocation w%d' % tablenumber
-                clauselist += 'w%d.wordid = %d' % (tablenumber, wordid)
-                tablenumber += 1
-        try:
-            # Crear la consulta a partir de las partes separadas
-            fullquery = 'select %s from %s where %s' % \
-                (fieldlist, tablelist, clauselist)
-            cur = self.connection.execute(fullquery)
-            rows = [row for row in cur]
-            return rows, wordids
-        except:
-            print "Error en la base de datos o frase no encontrada"
+            word_row = self.connection.execute("select rowid from wordlist where word='%s'"
+                                               % word).fetchone()
+            if word_row is not None:
+                word_id = word_row[0]
+                word_ids.append(word_id)
+                if table_number > 0:
+                    table_list  += ","
+                    clause_list += " and "
+                    clause_list += "w%d.urlid = w%d.urlid and " % (table_number-1, table_number)
+                field_list   += ",w%d.location" % table_number
+                table_list   += "wordlocation w%d" % table_number
+                clause_list  += "w%d.wordid=%d" % (table_number, word_id)
+                table_number += 1
 
+        full_query = "select %s from %s where %s" % (field_list, table_list, clause_list)
+        table = self.connection.execute(full_query)
+        rows = [row for row in table]
+
+        return rows, word_ids
 
     def getscoredlist(self, rows, wordids):
         totalscores = dict([(row[0],0) for row in rows])
