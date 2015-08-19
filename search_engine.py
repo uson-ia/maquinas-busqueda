@@ -81,7 +81,10 @@ class crawler:
         return False
 
     def add_link_ref(self, url_From, url_To, link_Text):
-        pass
+        fromid = self.getentryid('urllist', 'url', urlfrom)
+        toid = self.getentryid('urllist', 'url', urlto)
+        if fromid != toid:
+            cur = self.con.execute('insert into link (fromid, toid) values (%d, %d)'% (fromid, toid))
 
     def crawl(self, pages, depth=2):
 
@@ -143,6 +146,7 @@ class searcher(object):
         words = q.split(' ')
         table_number = 0
 
+        print words
         for word in words:
             # Obtener el ID de la palabra
             word_row = self.con.execute(
@@ -188,10 +192,10 @@ class searcher(object):
 
     def query(self, q):
         rows, word_ids = self.get_match_rows(q)
+        print rows, word_ids
         scores = self.get_scored_list(rows, word_ids)
         ranked_scores = \
-            sorted([(score, url) for (url, score) /
-                    in scores.items()], reverse=1)
+            sorted([(score, url) for (url, score) in scores.items()], reverse=1)
         for (score, url_id) in ranked_scores[0:10]:
             print '%f\t%s' % (score, self.get_url_name(urlid))
 
@@ -199,17 +203,24 @@ class searcher(object):
         v_small = 0.000001  # Con esto evitamos la division entre 0
         if small_is_better:
             min_score = min(scores.values())
-            return dict([(u, float(min_score) / max(v_small)) for (u, l) /
-                        in scores.items()])
+            return dict([(u, float(min_score) / max(v_small)) for (u, l) in scores.items()])
         else:
             max_score = max(scores.values())
             if max_score == 0:
                 max_score = v_small
-            return dict([(u, float(c) / max_score) for (u, c) /
-                        in scores.items()])
+            return dict([(u, float(c) / max_score) for (u, c) in scores.items()])
 
     def frequency_scores(self, rows):
         counts = dict([(row[0], 0) for row in rows])
         for row in rows:
             counts[row[0]] += 1
         return self.normalize_scores(counts)
+
+    def location_score(self, rows):
+        locations = dict([(row[0], 1000000) for row in rows])
+        for row in rows:
+            loc = sum(row[1:])
+            if loc < locations[row[0]]:
+                locations[row[0]] = loc
+
+        return self.normalize_scores(locations, small_is_better=1)
