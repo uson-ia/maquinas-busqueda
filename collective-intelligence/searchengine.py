@@ -15,7 +15,6 @@ ignore_words = set([line.strip() for line in
                     open("stop-words/stop-words_spanish_2_es.txt", "r")])
 
 class crawler:
-    # Inicializa el crawler con el nombre de la base de datos
     def __init__(self, db_name):
         self.connection = sqlite.connect(db_name)
 
@@ -83,8 +82,8 @@ class crawler:
                 print "        %s" % word
                 self.insert_entry("wordlist", "word", word)
                 word_id = self.select_entry_id("wordlist", "word", word)
-                self.connection.execute("insert into wordlocation(urlid, wordid, location) values (%d,%d,%d)"
-                                        % (url_id, word_id, i))
+            self.connection.execute("insert into wordlocation(urlid, wordid, location) values (%d,%d,%d)"
+                                    % (url_id, word_id, i))
 
     def index_page(self, url, html):
         """
@@ -105,18 +104,21 @@ class crawler:
         if url_id is None:
             self.insert_entry("urllist", "url", url)
             url_id = self.select_entry_id("urllist", "url", url)
-            self.index_page_words(url_id, words)
-            print "      INDEXED! %s" % url
+        self.index_page_words(url_id, words)
+        print "      INDEXED! %s" % url
 
-    # Extraer el texto de una página de HTML (sin etiquetas)
     def strip_html_tags(self, html):
+        """
+        html es un objeto BeautifulSoup
+
+        regresa una cadena unicode con el contenido del HTML sin las etiquetas
+        """
         html_inside_tag = html.string
-        if html_inside_tag == None:
-            contents = html.contents
-            resulting_text = ''
-            for tag in contents:
+        if html_inside_tag is None:
+            resulting_text = ""
+            for tag in html.contents:
                 sub_text = self.strip_html_tags(tag)
-                resulting_text += sub_text + '\n'
+                resulting_text += sub_text + "\n"
             return resulting_text
         else:
             return html_inside_tag.strip()
@@ -146,7 +148,7 @@ class crawler:
                 return True
         return False
 
-    def index_link_words(link_id, words):
+    def index_link_words(self, link_id, words):
         """
         link_id es un id de la base de datos que está asociada a enlace
 
@@ -165,7 +167,7 @@ class crawler:
             self.connection.execute("insert into linkwords(wordid, linkid) values (%d,%d)"
                                     % (word_id, link_id))
 
-    def index_link(from_url, to_url, link):
+    def index_link(self, from_url, to_url, link):
         """
         from_url es una cadena de caracteres que representa una URL
 
@@ -262,6 +264,7 @@ class crawler:
         for i in range(depth):
             print "  DEPTH %d" % i
             new_urls = set()
+            print "  URLs %s" % urls
             for url in urls:
                 content, encoding = self.get_page(url)
                 html = self.parse_page(content)
@@ -275,10 +278,7 @@ class crawler:
                         if self.is_http(ref_url) and not self.is_indexed(ref_url):
                             new_urls.add(ref_url)
                         self.index_link(url, ref_url, link)
-
-                self.db_commit()
-
-            urls = new_urls
+            urls = list(new_urls)
 
     # Crear las tablas de base de datos
     def db_create_tables(self):
