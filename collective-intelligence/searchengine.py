@@ -315,6 +315,27 @@ class crawler:
                 self, db_get_table("link"),
                 self, db_get_table("linkwords"))
 
+    def calculate_pagerank(self, iterations=20):
+        self.connection.execute("drop table if exists pagerank")
+        self.connection.execute("create table pagerank(urlid primary key, score)")
+
+        self.connection.execute("insert into pagerank select rowid, 1.0 from urllist")
+        self.db_commit()
+        print "CALCULATING PAGERANK..."
+        for i in range(iterations):
+            print "  ITERATION %d" % i
+            for (url_id,) in self.connection.execute("select rowid from urllist"):
+                pr = 0.15
+                for (linker,) in self.connection.execute("select distinct fromid from link where toid=%d" % url_id):
+                    linking_pr = self.connection.execute("select score from pagerank where urlid=%d"
+                                                         % linker).fetchone()[0]
+                    linking_count = self.connection.execute(
+                        "select count(*) from link where fromid=%d" % linker).fetchone()[0]
+                    pr += 0.95*(linking_pr/linking_count)
+                self.connection.execute("update pagerank set score=%f where urlid=%d" % (pr, url_id))
+            self.db_commit()
+        print "PAGERANK CALCULATION COMPLETED"
+
 class searcher:
     def __init__(self, db_name):
         self.connection = sqlite.connect(db_name)
@@ -360,10 +381,11 @@ class searcher:
 
     def get_scored_list(self, rows, word_ids):
         total_scores = dict([(row[0], 0) for row in rows])
-        weights = [(1.0,self.location_score(rows)),
-                   (1.0,self.frequency_score(rows)),
-                   (1.0,self.distance_score(rows)),
-                   (1.0,self.inbound_link_score(rows))]
+        weights = [(1.0, self.location_score(rows)),
+                   (1.0, self.frequency_score(rows)),
+                   (1.0, self.distance_score(rows)),
+                   (1.0, self.inbound_link_score(rows))
+                   (1.0, self.pagerank_score(rows))]
         for (weight, scores) in weights:
             for url in total_scores:
                 total_scores[url] += weight*scores[url]
@@ -425,3 +447,10 @@ class searcher:
                                                           % u).fetchone()[0])
                               for u in unique_urls])
         return self.normalize_scores(inbound_count)
+
+    def pagerank_score(self, rows):
+        pageranks = dict([(row[0], self.connection.execute("select score from pagerank where urlid=%d"
+                                                           % row[0]).fetchone()[0]) for row in rows])
+        max_rank = max(pageranks.values())
+        normalized_scores = dict([(u, float(l)/max_rank) for (u,l) in pageranks.items()])
+        return normalized_scores
