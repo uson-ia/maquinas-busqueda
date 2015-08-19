@@ -351,10 +351,12 @@ class searcher:
         print full_query
         print "END FULL QUERY"
 
-        table = self.connection.execute(full_query)
-        rows = [row for row in table]
-
-        return rows, word_ids
+        if table_list == "" or clause_list == "":
+            return None
+        else:
+            table = self.connection.execute(full_query)
+            rows = [row for row in table]
+            return rows, word_ids
 
     def getscoredlist(self, rows, wordids):
         totalscores = dict([(row[0],0) for row in rows])
