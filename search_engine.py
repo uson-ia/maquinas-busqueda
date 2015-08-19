@@ -174,6 +174,8 @@ class searcher(object):
         total_score = dict([(row[0], 0) for row in rows])
 
         # Aqui es donde despues pondras los pesos de la funcion score
+        weights = [(1.0, self.frequency_scores(rows))]
+
         for (weight, scores) in weights:
             for url in total_scores:
                 total_scores[url] += weight*scores[url]
@@ -205,3 +207,9 @@ class searcher(object):
                 max_score = v_small
             return dict([(u, float(c) / max_score) for (u, c) /
                         in scores.items()])
+
+    def frequency_scores(self, rows):
+        counts = dict([(row[0], 0) for row in rows])
+        for row in rows:
+            counts[row[0]] += 1
+        return self.normalize_scores(counts)
