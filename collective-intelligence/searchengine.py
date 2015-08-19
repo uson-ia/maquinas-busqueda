@@ -131,13 +131,18 @@ class crawler:
         splitted = splitter.split(text)
         return [s.lower() for s in splitted if s != ""]
 
-    # Regresar True si la url dada ya ha sido indexada
     def is_indexed(self, url):
-        result = self.connection.execute("select rowid from urllist where url='%s'" % url).fetchone()
-        if result != None:
-            # Revisa si la url ya fué indexada
-            url_id = self.connection.execute('select * from wordlocation where urlid = %d' % result[0]).fetchone()
-            if url_id != None:
+        """
+        url es una cadena de caracteres que representa una URL
+
+        regresa un booleano que determina si la URL ya fué inspeccionada por el crawler
+        """
+        table = self.connection.execute("select rowid from urllist where url='%s'" % url)
+        result = table.fetchone()
+        if result is not None:
+            url_id = self.connection.execute("select * from wordlocation where urlid = %d"
+                                             % result[0]).fetchone()
+            if url_id is not None:
                 return True
         return False
 
