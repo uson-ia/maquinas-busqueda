@@ -352,42 +352,32 @@ class searcher:
         print "END FULL QUERY"
 
         if table_list == "" or clause_list == "":
-            return None
+            return None, None
         else:
             table = self.connection.execute(full_query)
             rows = [row for row in table]
             return rows, word_ids
 
-    def getscoredlist(self, rows, wordids):
-        totalscores = dict([(row[0],0) for row in rows])
-
-        # Pesos para la métrica frequencyscore
-        # weights = [(1.0, self.frequencyscore(rows))]
-
-        # Pesos para la métrica locationscore
-        #weights = [(1.0, self.locationscore(rows))]
-
-        # Pesos para las métricas frequencyscore y locationscore
-        weights = [(1.0, self.frequencyscore(rows)),
-                   (1.5, self.locationscore(rows)),
-                   (10.0, self.distancescore(rows)),
-                   (1.0, self.inboundlinkscore(rows))]
-
+    def get_scored_list(self, rows, word_ids):
+        total_scores = dict([(row[0], 0) for row in rows])
+        weights = []
         for (weight, scores) in weights:
-            for url in totalscores:
-                totalscores[url] += weight*scores[url]
+            for url in total_scores:
+                total_scores[url] += weight*scores[url]
+        return total_scores
 
-        return totalscores
-
-    def geturlname(self, id):
+    def get_url_name(self, id):
         return self.connection.execute("select url from urllist where rowid = %d" % id).fetchone()[0]
 
-    def query(self, q):
-        rows, wordids = self.getmatchrows(q)
-        scores = self.getscoredlist(rows, wordids)
-        rankedscores = sorted([(score, url) for (url, score) in scores.items()], reverse=1)
-        for (score, urlid) in rankedscores[0:10]:
-            print '%f\t%s' % (score, self.geturlname(urlid))
+    def query(self, search_query):
+        rows, word_ids = self.get_matched_rows(search_query)
+        if rows is None and word_ids is None:
+            print "No results where found"
+        else:
+            scores = self.getscoredlist(rows, wordids)
+            rankedscores = sorted([(score, url) for (url, score) in scores.items()], reverse=1)
+            for (score, urlid) in rankedscores[0:10]:
+                print '%f\t%s' % (score, self.geturlname(urlid))
 
     def normalizescores(self, scores, smallIsBetter = 0):
         vsmall = 0.00001 # Evita errores de división por cero
