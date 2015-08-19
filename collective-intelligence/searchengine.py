@@ -161,6 +161,29 @@ class crawler:
         if from_url_id != to_url_id: cur = self.connection.execute('insert into link (fromid, toid) values (%d, %d)'
                                                                    % (from_url_id, to_url_id))
 
+    def get_page(self, url):
+        """
+        url es una cadena de caracteres.
+
+        regresa el contenido y la codificación de la página asociada a la URL
+        """
+        try:
+            resource = urllib2.urlopen(url)
+        except:
+            raise Exception("Could not open %s" % url)
+        encoding = resource.headers["content-type"].split("charset=")[-1]
+        content = unicode(resource.read(), encoding)
+        return content, encoding
+
+    def parse_page(self, content):
+        """
+        content es una cadena unicode cuyo contenido son los caracteres que conforman
+        a una página en HTML
+
+        regresa un objeto BeautifulSoup que representa el HTML parseado
+        """
+        html_tree = BeautifulSoup(content)
+        return html_tree
 
     # Comenzando con una lista de páginas, hacer una búsqueda a lo ancho
     # a una profundidad dada, indexando las páginas en el proceso
@@ -168,12 +191,8 @@ class crawler:
         for i in range(depth):
             new_urls = set()
             for url in urls:
-                try:
-                    c = urllib2.urlopen(url)
-                except:
-                    print "Could not open %s" % url
-                    continue
-                html = BeautifulSoup(c.read().decode("ascii", "ignore"))
+                content, encoding = self.get_page(url)
+                html = self.parse_page(content)
                 self.index_page(url, html)
 
                 links = html('a')
