@@ -374,10 +374,10 @@ class searcher:
         if rows is None and word_ids is None:
             print "No results where found"
         else:
-            scores = self.getscoredlist(rows, wordids)
-            rankedscores = sorted([(score, url) for (url, score) in scores.items()], reverse=1)
-            for (score, urlid) in rankedscores[0:10]:
-                print '%f\t%s' % (score, self.geturlname(urlid))
+            scores = self.get_scored_list(rows, word_ids)
+            ranked_scores = sorted([(score, url) for (url, score) in scores.items()], reverse=1)
+            for (score, url_id) in ranked_scores[0:10]:
+                print '%f\t%s' % (score, self.get_url_name(url_id))
 
     def normalizescores(self, scores, smallIsBetter = 0):
         vsmall = 0.00001 # Evita errores de división por cero
