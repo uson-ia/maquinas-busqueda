@@ -224,3 +224,18 @@ class searcher(object):
                 locations[row[0]] = loc
 
         return self.normalize_scores(locations, small_is_better=1)
+
+    def distances_score(self, rows):
+        # Si hay una sola palabra, todos ganan
+        if len(rows[0]) <= 2:
+            return dict([(row[0], 1.0) for row in rows])
+
+        # Inicializa el diccionario con valores grandes
+        min_distance = dict([(row[0], 1000000) for row in rows])
+
+        for row in rows:
+            dist = sum([abs([i] - row[i - 1]) for i in range(2, len(row))])
+            if dist < min_distance[row[0]]:
+                min_distance[row[0]] = dist
+
+        return self.normalize_scores(min_distance, small_is_better=1)
