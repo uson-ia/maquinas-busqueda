@@ -5,18 +5,21 @@ from bs4 import *
 from urlparse import urljoin
 from sqlite3 import dbapi2 as sqlite
 import re
+import os
+
+dirpath =  os.path.dirname(os.path.abspath(__file__))
 
 test_urls    = ["http://eduardoacye.github.io"]
 test_db      = "searchindex.db"
 ignore_words = set([line.strip() for line in
-                    open("stop-words/stop-words_spanish_1_es.txt", "r")]
+                    open(dirpath + "/stop-words/stop-words_spanish_1_es.txt", "r")]
                    +
                    [line.strip() for line in
-                    open("stop-words/stop-words_spanish_2_es.txt", "r")])
+                    open(dirpath + "/stop-words/stop-words_spanish_2_es.txt", "r")])
 
 class crawler:
     def __init__(self, db_name):
-        self.connection = sqlite.connect(db_name)
+        self.connection = sqlite.connect(dirpath + "/" + db_name)
 
     def __del__(self):
         self.connection.close()
@@ -288,7 +291,7 @@ class crawler:
             new_urls = set()
             print "  URLs %s" % urls
             for url in urls:
-                print "  VISITING %s" % url
+                print "%d  VISITING %s" % (i, url)
                 content, encoding = self.get_page(url)
                 if content is None and encoding is None:
                     continue
@@ -364,7 +367,7 @@ class crawler:
 
 class searcher:
     def __init__(self, db_name):
-        self.connection = sqlite.connect(db_name)
+        self.connection = sqlite.connect(dirpath + "/" + db_name)
 
     def __del__(self):
         self.connection.close()
