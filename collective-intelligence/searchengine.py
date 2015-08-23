@@ -415,7 +415,8 @@ class searcher:
                    (1.0, self.distance_score(rows)),
                    (1.0, self.inbound_link_score(rows)),
                    (1.0, self.pagerank_score(rows)),
-                   (1.0, self.link_text_score(rows, word_ids))]
+                   #(1.0, self.link_text_score(rows, word_ids))
+        ]
         for (weight, scores) in weights:
             for url in total_scores:
                 total_scores[url] += weight*scores[url]
