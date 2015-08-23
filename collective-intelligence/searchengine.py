@@ -334,15 +334,15 @@ class crawler:
         table = self.connection.execute("select * from %s" % table)
         return table.fetchall()
 
-    def db_get_tables(self, connection):
+    def db_get_tables(self):
         """
         regresa una tupla con listas con el contenido de cada tabla en la base de datos
         """
-        return (self, db_get_table("urllist"),
-                self, db_get_table("wordlist"),
-                self, db_get_table("wordlocation"),
-                self, db_get_table("link"),
-                self, db_get_table("linkwords"))
+        return (self.db_get_table("urllist"),
+                self.db_get_table("wordlist"),
+                self.db_get_table("wordlocation"),
+                self.db_get_table("link"),
+                self.db_get_table("linkwords"))
 
     def calculate_pagerank(self, iterations=20):
         self.connection.execute("drop table if exists pagerank")
