@@ -428,12 +428,14 @@ class searcher:
     def query(self, search_query):
         rows, word_ids = self.get_matched_rows(search_query)
         if rows is None and word_ids is None:
-            print "No results where found"
+            # print "No results where found"
+            return []
         else:
             scores = self.get_scored_list(rows, word_ids)
             ranked_scores = sorted([(score, url) for (url, score) in scores.items()], reverse=1)
-            for (score, url_id) in ranked_scores[0:10]:
-                print '%f\t%s' % (score, self.get_url_name(url_id))
+            #for (score, url_id) in ranked_scores[0:10]:
+            #    print '%f\t%s' % (score, self.get_url_name(url_id))
+            return [[score, self.get_url_name(url_id)] for (score, url_id) in ranked_scores[0:10]]
 
     def normalize_scores(self, scores, small_is_better = False):
         vsmall = 0.00001
