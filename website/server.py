@@ -7,7 +7,7 @@ import sys
 sys.path.insert(0, os.path.abspath("../collective-intelligence"))
 
 import searchengine as se
-searcher = se.searcher("uson.db")
+searcher = se.searcher("index.db")
 
 foofle_data = {"query" : "",
                "results" : []}
