@@ -2,9 +2,16 @@
 from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler, Application, url, StaticFileHandler
 import os.path
+import sys
+
+sys.path.insert(0, os.path.abspath("../collective-intelligence"))
+
+import searchengine as se
 
 foofle_data = {"query" : "",
                "results" : []}
+
+foofle_search = se.searcher("uson.db")
 
 def update_data(query):
     foofle_data["query"] = query
