@@ -7,6 +7,7 @@ import sys
 sys.path.insert(0, os.path.abspath("../collective-intelligence"))
 
 import searchengine as se
+searcher = se.searcher("uson.db")
 
 foofle_data = {"query" : "",
                "results" : []}
@@ -15,7 +16,7 @@ foofle_search = se.searcher("uson.db")
 
 def update_data(query):
     foofle_data["query"] = query
-    foofle_data["results"] = [[10, "http://" + query]]
+    foofle_data["results"] = searcher.query(query)
 
 class MainHandler(RequestHandler):
     def initialize(self, data):
@@ -41,5 +42,5 @@ def make_app():
 
 def main():
     app = make_app()
-    app.listen(8888)
+    app.listen(3456)
     IOLoop.current().start()
