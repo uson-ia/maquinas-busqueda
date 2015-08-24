@@ -500,6 +500,6 @@ class searcher:
                                                  % from_url_id).fetchone()[0]
                     link_scores[to_url_id] += pr
         max_score = max(link_scores.values())
-        maxscore = 1 if maxscore == 0 else maxscore
+        max_score = 1 if max_score == 0 else max_score
         normalized_scores = dict([(u,float(l)/max_score) for (u,l) in link_scores.items()])
         return normalized_scores
