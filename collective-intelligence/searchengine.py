@@ -19,7 +19,8 @@ ignore_words = set([line.strip() for line in
 
 class crawler:
     def __init__(self, db_name):
-        self.connection = sqlite.connect(dirpath + "/" + db_name)
+        self.db_name = db_name
+        self.connection = sqlite.connect(dirpath + "/db/" + db_name)
 
     def __del__(self):
         self.connection.close()
@@ -367,7 +368,8 @@ class crawler:
 
 class searcher:
     def __init__(self, db_name):
-        self.connection = sqlite.connect(dirpath + "/" + db_name)
+        self.db_name = db_name
+        self.connection = sqlite.connect(dirpath + "/db/" + db_name)
 
     def __del__(self):
         self.connection.close()
