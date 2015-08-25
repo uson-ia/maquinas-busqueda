@@ -12,8 +12,6 @@ searcher = se.searcher("index.db")
 foofle_data = {"query" : "",
                "results" : []}
 
-foofle_search = se.searcher("uson.db")
-
 def update_data(query):
     foofle_data["query"] = query
     foofle_data["results"] = searcher.query(query)
@@ -33,14 +31,27 @@ class MainHandler(RequestHandler):
 
 
 def make_app():
+    settings = {
+                # el flag de debug proveé comportamientos útiles para el desarrollo, ejemplo:
+                # - autoreload, para reiniciar el servidor automáticamente cuando sea necesario
+                # - no se cachean los templates compilados (i.e. no se tiene que reiniciar el servidor para ver cambios)
+                # - si sucede una excepciones y no se atrapa, se sirve al cliente en una página de error
+                'debug':True,
+    }
+
     return Application(
         [
             url(r"/", MainHandler, {"data" : foofle_data}),
             url(r"/(.*)", StaticFileHandler, {"path":"./ui"})
         ],
-        template_path = os.path.join(os.path.dirname(__file__), "ui"))
+        template_path = os.path.join(os.path.dirname(__file__), "ui"), **settings)
 
 def main():
     app = make_app()
-    app.listen(3456)
+    port = 3456
+    app.listen(port)
+    print "Ahoy pirate! bring your ship to the port " + str(port) + " [url is localhost:" + str(port) + "]"
     IOLoop.current().start()
+
+if __name__ == "__main__":
+    main()

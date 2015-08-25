@@ -19,7 +19,8 @@ ignore_words = set([line.strip() for line in
 
 class crawler:
     def __init__(self, db_name):
-        self.connection = sqlite.connect(dirpath + "/" + db_name)
+        self.db_name = db_name
+        self.connection = sqlite.connect(dirpath + "/db/" + db_name)
 
     def __del__(self):
         self.connection.close()
@@ -367,7 +368,8 @@ class crawler:
 
 class searcher:
     def __init__(self, db_name):
-        self.connection = sqlite.connect(dirpath + "/" + db_name)
+        self.db_name = db_name
+        self.connection = sqlite.connect(dirpath + "/db/" + db_name)
 
     def __del__(self):
         self.connection.close()
@@ -426,7 +428,14 @@ class searcher:
         return self.connection.execute("select url from urllist where rowid = %d" % id).fetchone()[0]
 
     def query(self, search_query):
-        rows, word_ids = self.get_matched_rows(search_query)
+        try:
+            rows, word_ids = self.get_matched_rows(search_query)
+        except:
+            print u">>> Error al ejecutar la búsqueda '"+search_query+"'"
+            print u">>> Asegurate de haber ejecutado el crawler. "
+            print u">>> Para más información checa el README.md del proyecto"
+            return
+
         if rows is None and word_ids is None:
             # print "No results where found"
             return []

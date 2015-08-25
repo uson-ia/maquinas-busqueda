@@ -13,17 +13,15 @@ In [1]: import searchengine
 
 In [2]: urls = [url, ...]
 
-In [3]: db = "index.db"
+In [3]: crawler = searchengine.crawler("index.db")
 
-In [4]: crawler = searchengine.crawler(db)
+In [4]: crawler.db_create_tables()
 
-In [5]: crawler.db_create_tables()
+In [5]: crawler.crawl(urls, depth=D)
 
-In [6]: crawler.crawl(urls, depth=D)
+In [6]: crawler.calculate_pagerank(I)
 
-In [7]: crawler.calculate_pagerank(I)
-
-In [8]: exit
+In [7]: exit
 ```
 
 Uno tiene que determinar los valores de:
@@ -32,12 +30,10 @@ Uno tiene que determinar los valores de:
 - `D` : Es un entero positivo que indica la profundidad de la búsqueda (sugiero que primero lo hagan con 1 o con 2, ya que con las pruebas que yo hice, una profundidad de 3 tardó mas de una noche en correr).
 - `I` : Iteraciones del cálculo del Pagerank, con 20 tarda algo de tiempo pero mucho menos que hacer `crawl`, pudieran probar con valores mas grandes para aproximar mejor el valor de pagerank.
 
-Después se van a la carpeta website y abren `ipython`
+Para iniciar el servidor, abren una terminal en la carpeta `website` y ejecutan
 
 ```
-In [1]: import server
-
-In [2]: server.main()
+python -m server
 ```
 
 Después pueden abrir en algún browser la dirección `localhost:3456`.
