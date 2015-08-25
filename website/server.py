@@ -12,8 +12,6 @@ searcher = se.searcher("index.db")
 foofle_data = {"query" : "",
                "results" : []}
 
-foofle_search = se.searcher("uson.db")
-
 def update_data(query):
     foofle_data["query"] = query
     foofle_data["results"] = searcher.query(query)
