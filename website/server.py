@@ -33,12 +33,20 @@ class MainHandler(RequestHandler):
 
 
 def make_app():
+    settings = {
+                # el flag de debug proveé comportamientos útiles para el desarrollo, ejemplo:
+                # - autoreload, para reiniciar el servidor automáticamente cuando sea necesario
+                # - no se cachean los templates compilados (i.e. no se tiene que reiniciar el servidor para ver cambios)
+                # - si sucede una excepciones y no se atrapa, se sirve al cliente en una página de error
+                'debug':True,
+    }
+
     return Application(
         [
             url(r"/", MainHandler, {"data" : foofle_data}),
             url(r"/(.*)", StaticFileHandler, {"path":"./ui"})
         ],
-        template_path = os.path.join(os.path.dirname(__file__), "ui"))
+        template_path = os.path.join(os.path.dirname(__file__), "ui"), **settings)
 
 def main():
     app = make_app()
