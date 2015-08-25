@@ -42,5 +42,7 @@ def make_app():
 
 def main():
     app = make_app()
-    app.listen(3456)
+    port = 3456
+    app.listen(port)
+    print "Ahoy pirate! bring your ship to the port " + str(port) + " at localhost"
     IOLoop.current().start()
