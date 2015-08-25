@@ -46,3 +46,6 @@ def main():
     app.listen(port)
     print "Ahoy pirate! bring your ship to the port " + str(port) + " at localhost"
     IOLoop.current().start()
+
+if __name__ == "__main__":
+    main()
