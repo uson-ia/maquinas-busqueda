@@ -178,6 +178,8 @@ class searcher:
         totalscores = dict([(row[0], 0) for row in rows])
 
         # Aqui van todas las funciones weights para probar cada metrica presentada
+        #weights = []
+        weights = [(1.0, self.frequencyscore(rows))]
 
         for (weight, scores) in weights:
             for url in totalscores:
@@ -195,6 +197,24 @@ class searcher:
         rankedscores = sorted([(score, url) for (url, score) in scores.items()], reverse = 1)
         for (score, urlid) in rankedscores[0:10]:
             print '%f\t%s' % (score,self.geturlname(urlid))
+
+    def normalizescores(self, scores, smallIsBetter = 0):
+        vsmall = 0.00001 # Se evita la division por cero
+        if smallIsBetter:
+            minscore = min(scores.values())
+            return dict([(u,float(minscore)/max(vsmall,l)) for (u,l) \
+                in scores.items()])
+        else:
+            maxscore = max(scores.values())
+            if maxscore == 0:
+                maxscore = vsmall
+            return dict([(u,float(c)/maxscore) for (u,c) in scores.items()])
+
+    def frequencyscore(self, rows):
+        counts = dict([(row[0], 0) for row in rows])
+        for row in rows: 
+            counts[row[0]] += 1
+        return self.normalizescores(counts)
 
 def main():
     print "Ejemplos que aparecen en el proyecto principal"
@@ -246,7 +266,14 @@ def main():
     """
 
     """
-    print "Ejemplo 6 :("
+    print "Ejemplo 7 :("
+    import searchengine
+    e = searchengine.searcher('searchindex.db')
+    e.query('John')
+    """
+
+    """
+    print "Ejemplo 8 :("
     import searchengine
     e = searchengine.searcher('searchindex.db')
     e.query('John')
