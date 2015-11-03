@@ -43,7 +43,8 @@ class crawler(object):
 
     # Separa las palabras
     def separatewords(self, text):
-        return None
+        splitter = re.compile('\\W*')
+        return [s.lower() for s in splitter.split(text) if s != '']
 
     # Retorna true si esta url ya esta indexada
     def isindexed(self, url):
