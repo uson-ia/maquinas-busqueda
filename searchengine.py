@@ -30,7 +30,16 @@ class crawler(object):
 
     # Extrae el texto de una pagina HTML (sin tags)
     def gettextonly(self, soup):
-        return None
+        v = soup.string
+        if v == None:
+            c = soup.contents
+            resulttext = ''
+            for t in c:
+                subtext = self.gettextonly(t)
+                resulttext += subtext + '\n'
+            return resulttext
+        else:
+            return v.strip()
 
     # Separa las palabras
     def separatewords(self, text):
@@ -110,6 +119,13 @@ def main():
 
     """
     print "Ejemplo 3"
+    import searchengine
+    crawler = searchengine.crawler('searchindex.db')
+    crawler.createindextables()
+    """
+
+    """
+    print "Ejemplo 4"
     import searchengine
     crawler = searchengine.crawler('searchindex.db')
     crawler.createindextables()
