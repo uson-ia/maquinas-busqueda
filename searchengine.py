@@ -6,8 +6,7 @@ from urlparse import urljoin
 from sqlite3 import dbapi2 as sqlite
 
 # Se crea una lista de palabras a ignorar
-ignorewords = set(['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it'])
-
+ignorewords = set(['the','of','to','and','a','in','is','it'])
 
 class crawler(object):
     # Se inicializa el crawler con el nombre de la base de datos
@@ -24,11 +23,11 @@ class crawler(object):
     # si no esta presente
     def getentryid(self, table, field, value, createnew=True):
         cur = self.con.execute(
-            "select rowid from %s where %s='%s'" % (table, field, value))
+        "select rowid from %s where %s='%s'" % (table, field, value))
         res = cur.fetchone()
         if res == None:
             cur = self.con.execute(
-                "insert into %s (%s) values ('%s')" % (table, field, value))
+            "insert into %s (%s) values ('%s')" % (table, field, value))
             return cur.lastrowid
         else:
             return res[0]
@@ -77,12 +76,12 @@ class crawler(object):
     # Retorna true si esta url ya esta indexada
     def isindexed(self, url):
         u = self.con.execute \
-            ("select rowid from urllist where url='%s'" % url).fetchone()
+        ("select rowid from urllist where url='%s'" % url).fetchone()
         if u != None:
-            # Revisa si realmente se a crawleado
+        # Revisa si realmente se a crawleado
             v = self.con.execute(
-                'select * from wordlocation where urlid=%d' % u[0]).fetchone()
-            if v != None:
+            'select * from wordlocation where urlid=%d' % u[0]).fetchone( )
+            if v != None: 
                 return True
         return False
 
@@ -93,7 +92,7 @@ class crawler(object):
     # Comienza con una lista de paginas, hace una amplitud
     # primero busca a la profundidad dada , indexando paginas
     # como va
-    def crawl(self, pages, depth=2):
+    def crawl(self, pages, depth = 2):
         for i in range(depth):
             newpages = set()
             for page in pages:
@@ -134,7 +133,6 @@ class crawler(object):
         self.con.execute('create index urlfromidx on link(fromid)')
         self.dbcommit()
 
-
 class searcher:
     def __init__(self, dbname):
         self.con = sqlite.connect(dbname)
@@ -168,7 +166,7 @@ class searcher:
                 tablelist += 'wordlocation w%d' % tablenumber
                 clauselist += 'w%d.wordid=%d' % (tablenumber, wordid)
                 tablenumber += 1
-
+                
         # Se crea el query a partir de las partes separadas
         fullquery = 'select %s from %s where %s' % (fieldlist, tablelist, clauselist)
         cur = self.con.execute(fullquery)
@@ -176,6 +174,27 @@ class searcher:
 
         return rows, wordids
 
+    def getscoredlist(self, rows, wordids):
+        totalscores = dict([(row[0], 0) for row in rows])
+
+        # Aqui van todas las funciones weights para probar cada metrica presentada
+
+        for (weight, scores) in weights:
+            for url in totalscores:
+                totalscores[url] += weight * scores[url]
+
+        return totalscores
+
+    def geturlname(self, id):
+        return self.con.execute(
+        "select url from urllist where rowid=%d" % id).fetchone()[0]
+
+    def query(self, q):
+        rows, wordids = self.getmatchrows(q)
+        scores = self.getscoredlist(rows, wordids)
+        rankedscores = sorted([(score, url) for (url, score) in scores.items()], reverse = 1)
+        for (score, urlid) in rankedscores[0:10]:
+            print '%f\t%s' % (score,self.geturlname(urlid))
 
 def main():
     print "Ejemplos que aparecen en el proyecto principal"
@@ -220,12 +239,18 @@ def main():
     """
 
     """
-    print "Ejemplo 6"
+    print "Ejemplo 6 :("
     import searchengine
     e = searchengine.searcher('searchindex.db')
     e.getmatchrows('John')
     """
 
+    """
+    print "Ejemplo 6 :("
+    import searchengine
+    e = searchengine.searcher('searchindex.db')
+    e.query('John')
+    """
 
 if __name__ == "__main__":
     main()
