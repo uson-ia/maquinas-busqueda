@@ -22,7 +22,15 @@ class crawler(object):
     # Funcion auxiliar para obtener el id de la entrada y agregarlo
     # si no esta presente
     def getentryid(self, table, field, value, createnew=True):
-        return None
+        cur = self.con.execute(
+        "select rowid from %s where %s='%s'" % (table, field, value))
+        res = cur.fetchone()
+        if res == None:
+            cur = self.con.execute(
+            "insert into %s (%s) values ('%s')" % (table, field, value))
+            return cur.lastrowid
+        else:
+            return res[0]
 
     # Indexar una pagina individual
     def addtoindex(self, url, soup):
@@ -44,7 +52,7 @@ class crawler(object):
             if word in ignorewords:
                 continue
             wordid = self.getentryid('wordlist', 'word', word)
-            self.con.execute("insert into wordlocation(urlid,wordid,location) \
+            self.con.execute("insert into wordlocation(urlid, wordid, location) \
                 values (%d,%d,%d)" % (urlid, wordid, i))
 
     # Extrae el texto de una pagina HTML (sin tags)
