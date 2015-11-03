@@ -26,7 +26,26 @@ class crawler(object):
 
     # Indexar una pagina individual
     def addtoindex(self, url, soup):
-        print 'Indexing ' + url
+        # print 'Indexando %s' % url
+        if self.isindexed(url):
+            return
+        print 'Indexando ' + url
+
+        # Obtener las palabras individuales
+        text = self.gettextonly(soup)
+        words = self.separatewords(text)
+
+        # Obtener el id de la URL
+        urlid = self.getentryid('urllist', 'url', url)
+
+        # Linkear cada palabra con esta URL
+        for i in range(len(words)):
+            word = words[i]
+            if word in ignorewords:
+                continue
+            wordid = self.getentryid('wordlist', 'word', word)
+            self.con.execute("insert into wordlocation(urlid,wordid,location) \
+                values (%d,%d,%d)" % (urlid, wordid, i))
 
     # Extrae el texto de una pagina HTML (sin tags)
     def gettextonly(self, soup):
