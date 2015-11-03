@@ -3,6 +3,7 @@ __author__ = 'JuanManuel'
 import urllib2
 from BeautifulSoup import *
 from urlparse import urljoin
+from sqlite3 import dbapi2 as sqlite
 
 # Se crea una lista de palabras a ignorar
 ignorewords = set(['the','of','to','and','a','in','is','it'])
@@ -10,13 +11,13 @@ ignorewords = set(['the','of','to','and','a','in','is','it'])
 class crawler(object):
     # Se inicializa el crawler con el nombre de la base de datos
     def __init__(self, dbname):
-        pass
+        self.con = sqlite.connect(dbname)
 
     def __del__(self):
-        pass
+        self.con.close()
 
     def dbcommit(self):
-        pass
+        self.con.commit()
 
     # Funcion auxiliar para obtener el id de la entrada y agregarlo
     # si no esta presente
@@ -64,7 +65,7 @@ class crawler(object):
                         url = urljoin(page, link['href'])
                         if url.find("'") != -1:
                             continue
-                        url = url.split('#')[0] 
+                        url = url.split('#')[0]
                         if url[0:4] == 'http' and not self.isindexed(url):
                             newpages.add(url)
                         linkText = self.gettextonly(link)
