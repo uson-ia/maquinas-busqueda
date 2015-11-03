@@ -76,7 +76,17 @@ class crawler(object):
 
     # Se crean las tablas para la base de datos
     def createindextables(self):
-        pass
+        self.con.execute('create table urllist(url)')
+        self.con.execute('create table wordlist(word)')
+        self.con.execute('create table wordlocation(urlid, wordid, location)')
+        self.con.execute('create table link(fromid integer, toid integer)')
+        self.con.execute('create table linkwords(wordid, linkid)')
+        self.con.execute('create index wordidx on wordlist(word)')
+        self.con.execute('create index urlidx on urllist(url)')
+        self.con.execute('create index wordurlidx on wordlocation(wordid)')
+        self.con.execute('create index urltoidx on link(toid)')
+        self.con.execute('create index urlfromidx on link(fromid)')
+        self.dbcommit()
 
 
 def main():
@@ -96,6 +106,13 @@ def main():
     pagelist = ['https://en.wikipedia.org/wiki/Game_of_Thrones']
     crawler = searchengine.crawler('')
     crawler.crawl(pagelist)
+    """
+
+    """
+    print "Ejemplo 3"
+    import searchengine
+    crawler = searchengine.crawler('searchindex.db')
+    crawler.createindextables()
     """
 
 if __name__ == "__main__":
