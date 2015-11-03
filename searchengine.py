@@ -75,6 +75,14 @@ class crawler(object):
 
     # Retorna true si esta url ya esta indexada
     def isindexed(self, url):
+        u = self.con.execute \
+        ("select rowid from urllist where url='%s'" % url).fetchone()
+        if u != None:
+        # Revisa si realmente se a crawleado
+            v = self.con.execute(
+            'select * from wordlocation where urlid=%d' % u[0]).fetchone( )
+            if v != None: 
+                return True
         return False
 
     # Agrega un link entre dos paginas
@@ -157,6 +165,14 @@ def main():
     import searchengine
     crawler = searchengine.crawler('searchindex.db')
     crawler.createindextables()
+    """
+
+    """
+    print "Ejemplo 5"
+    import searchengine
+    crawler = searchengine.crawler('searchindex.db')
+    pages = ['https://en.wikipedia.org/wiki/Game_of_Thrones']
+    crawler.crawl(pages)
     """
 
 if __name__ == "__main__":
