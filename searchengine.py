@@ -180,7 +180,9 @@ class searcher:
         # Aqui van todas las funciones weights para probar cada metrica presentada
         #weights = []
         #weights = [(1.0, self.frequencyscore(rows))]
-        weights = [(1.0, self.locationscore(rows))]
+        #weights = [(1.0, self.locationscore(rows))]
+        #weights = [(1.0,self.frequencyscore(rows)), (1.5,self.locationscore(rows))]
+        weights = [(1.0, self.distancescore(rows))]
 
         for (weight, scores) in weights:
             for url in totalscores:
@@ -224,6 +226,21 @@ class searcher:
             if loc < locations[row[0]]:
                 locations[row[0]] = loc
         return self.normalizescores(locations, smallIsBetter = 1)
+
+    def distancescore(self, rows):
+        # Si solo hay una palabra, todos ganamos!
+        if len(rows[0]) <= 2:
+            return dict([(row[0], 1.0) for row in rows])
+
+        # Inicializa el diccionario con valores largos
+        mindistance = dict([(row[0], 1000000) for row in rows])
+
+        for row in rows:
+            dist = sum([abs(row[i]-row[i-1]) for i in range(2, len(row))])
+            if dist < mindistance[row[0]]: 
+                mindistance[row[0]] = dist
+
+        return self.normalizescores(mindistance, smallIsBetter=1)
 
 def main():
     print "Ejemplos que aparecen en el proyecto principal"
