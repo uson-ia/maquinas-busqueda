@@ -182,6 +182,8 @@ class searcher:
         #weights = [(1.0, self.frequencyscore(rows))]
         #weights = [(1.0, self.locationscore(rows))]
         #weights = [(1.0,self.frequencyscore(rows)), (1.5,self.locationscore(rows))]
+        #weights = [(1.0, self.distancescore(rows))]
+        #weights = [(1.0, self.inboundlinkscore(rows))]
         weights = [(1.0, self.distancescore(rows))]
 
         for (weight, scores) in weights:
@@ -241,6 +243,13 @@ class searcher:
                 mindistance[row[0]] = dist
 
         return self.normalizescores(mindistance, smallIsBetter=1)
+
+    def inboundlinkscore(self, rows):
+        uniqueurls = set([row[0] for row in rows])
+        inboundcount = dict([(u,self.con.execute( \
+            'select count(*) from link where toid=%d' % u).fetchone()[0]) \
+            for u in uniqueurls])
+        return self.normalizescores(inboundcount)
 
 def main():
     print "Ejemplos que aparecen en el proyecto principal"
