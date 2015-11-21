@@ -4,9 +4,13 @@ import urllib2
 from BeautifulSoup import *
 from urlparse import urljoin
 from pysqlite2 import dbapi2 as sqlite
+import nn
 
 # Se crea una lista de palabras a ignorar
-ignorewords = set(['the','of','to','and','a','in','is','it'])
+ignorewords = set(['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it'])
+
+mynet = nn.searchnet('nn.db')
+
 
 class crawler(object):
     # Se inicializa el crawler con el nombre de la base de datos
@@ -23,11 +27,11 @@ class crawler(object):
     # si no esta presente
     def getentryid(self, table, field, value, createnew=True):
         cur = self.con.execute(
-        "select rowid from %s where %s='%s'" % (table, field, value))
+            "select rowid from %s where %s='%s'" % (table, field, value))
         res = cur.fetchone()
         if res == None:
             cur = self.con.execute(
-            "insert into %s (%s) values ('%s')" % (table, field, value))
+                "insert into %s (%s) values ('%s')" % (table, field, value))
             return cur.lastrowid
         else:
             return res[0]
@@ -76,12 +80,12 @@ class crawler(object):
     # Retorna true si esta url ya esta indexada
     def isindexed(self, url):
         u = self.con.execute \
-        ("select rowid from urllist where url='%s'" % url).fetchone()
+            ("select rowid from urllist where url='%s'" % url).fetchone()
         if u != None:
-        # Revisa si realmente se a crawleado
+            # Revisa si realmente se a crawleado
             v = self.con.execute(
-            'select * from wordlocation where urlid=%d' % u[0]).fetchone( )
-            if v != None: 
+                'select * from wordlocation where urlid=%d' % u[0]).fetchone()
+            if v != None:
                 return True
         return False
 
@@ -92,7 +96,7 @@ class crawler(object):
     # Comienza con una lista de paginas, hace una amplitud
     # primero busca a la profundidad dada , indexando paginas
     # como va
-    def crawl(self, pages, depth = 2):
+    def crawl(self, pages, depth=2):
         for i in range(depth):
             newpages = set()
             for page in pages:
@@ -150,7 +154,7 @@ class crawler(object):
 
 
                 # Se recorren todas las paginas que estan linkeadas a esta
-                for(linker,) in self.con.execute('select distinct fromid \
+                for (linker,) in self.con.execute('select distinct fromid \
                         from link where toid = %d' % urlid):
                     # Obtener el valor del pagerank del linker
                     linkingpr = self.con.execute('select score from pagerank \
@@ -166,6 +170,7 @@ class crawler(object):
                             urlid = %d' % (pr, urlid))
 
             self.dbcommit()
+
 
 class searcher:
     def __init__(self, dbname):
@@ -200,7 +205,7 @@ class searcher:
                 tablelist += 'wordlocation w%d' % tablenumber
                 clauselist += 'w%d.wordid=%d' % (tablenumber, wordid)
                 tablenumber += 1
-                
+
         # Se crea el query a partir de las partes separadas
         fullquery = 'select %s from %s where %s' % (fieldlist, tablelist, clauselist)
         cur = self.con.execute(fullquery)
@@ -212,17 +217,18 @@ class searcher:
         totalscores = dict([(row[0], 0) for row in rows])
 
         # Aqui van todas las funciones weights para probar cada metrica presentada
-        #weights = []
-        #weights = [(1.0, self.frequencyscore(rows))]
-        #weights = [(1.0, self.locationscore(rows))]
-        #weights = [(1.0, self.frequencyscore(rows)), (1.5, self.locationscore(rows))]
-        #weights = [(1.5, self.distancescore(rows))]
-        #weights = [(1.0, self.inboundlinkscore(rows))]
-        #weights = [(1.0, self.locationscore(rows)),
+        # weights = []
+        # weights = [(1.0, self.frequencyscore(rows))]
+        # weights = [(1.0, self.locationscore(rows))]
+        # weights = [(1.0, self.frequencyscore(rows)), (1.5, self.locationscore(rows))]
+        # weights = [(1.5, self.distancescore(rows))]
+        # weights = [(1.0, self.inboundlinkscore(rows))]
+        # weights = [(1.0, self.locationscore(rows)),
         #           (1.0, self.frequencyscore(rows)),
         #           (1.0, self.pagerankscore(rows))]
-        weights = [(1.0, self.linktextscore(rows, wordids))]
-        
+        # weights = [(1.0, self.linktextscore(rows, wordids))]
+        weights = [(1.0, self.nnscore(rows, wordids))]
+
         for (weight, scores) in weights:
             for url in totalscores:
                 totalscores[url] += weight * scores[url]
@@ -231,30 +237,32 @@ class searcher:
 
     def geturlname(self, id):
         return self.con.execute(
-        "select url from urllist where rowid=%d" % id).fetchone()[0]
+            "select url from urllist where rowid=%d" % id).fetchone()[0]
 
     def query(self, q):
         rows, wordids = self.getmatchrows(q)
         scores = self.getscoredlist(rows, wordids)
-        rankedscores = sorted([(score, url) for (url, score) in scores.items()], reverse = 1)
+        rankedscores = sorted([(score, url) for (url, score) in scores.items()], reverse=1)
         for (score, urlid) in rankedscores[0:10]:
             print '%f\t%s' % (score, self.geturlname(urlid))
 
-    def normalizescores(self, scores, smallIsBetter = 0):
-        vsmall = 0.00001 # Se evita la division por cero
+        return wordids, [r[1] for r in rankedscores[0:10]]
+
+    def normalizescores(self, scores, smallIsBetter=0):
+        vsmall = 0.00001  # Se evita la division por cero
         if smallIsBetter:
             minscore = min(scores.values())
             return dict([(u, float(minscore) / max(vsmall, l)) for (u, l)
-                in scores.items()])
+                         in scores.items()])
         else:
             maxscore = max(scores.values())
-            if maxscore == 0: 
-                maxscore == vsmall
-            return dict([(u, float(c) / maxscore) for (u,c) in scores.items()])
+            if maxscore == 0:
+                maxscore = vsmall
+            return dict([(u, float(c) / maxscore) for (u, c) in scores.items()])
 
     def frequencyscore(self, rows):
         counts = dict([(row[0], 0) for row in rows])
-        for row in rows: 
+        for row in rows:
             counts[row[0]] += 1
         return self.normalizescores(counts)
 
@@ -264,7 +272,7 @@ class searcher:
             loc = sum(row[1:])
             if loc < locations[row[0]]:
                 locations[row[0]] = loc
-        return self.normalizescores(locations, smallIsBetter = 1)
+        return self.normalizescores(locations, smallIsBetter=1)
 
     def distancescore(self, rows):
         # Si solo hay una palabra, todos ganamos!
@@ -275,22 +283,22 @@ class searcher:
 
         for row in rows:
             dist = sum([abs(row[i] - row[i - 1]) for i in range(2, len(row))])
-            if dist < mindistance[row[0]]: 
+            if dist < mindistance[row[0]]:
                 mindistance[row[0]] = dist
         return self.normalizescores(mindistance, smallIsBetter=1)
 
     def inboundlinkscore(self, rows):
         uniqueurls = set([row[0] for row in rows])
         inboundcount = dict([(u, self.con.execute(
-            "select count(*) from link where toid = %d" %u).fetchone()[0])
-            for u in uniqueurls])
+            "select count(*) from link where toid = %d" % u).fetchone()[0])
+                             for u in uniqueurls])
         return self.normalizescores(inboundcount)
 
     def pagerankscore(self, rows):
         pageranks = dict([(row[0], self.con.execute('select score from \
                 pagerank where urlid = %d' % row[0]).fetchone()[0]) for row in rows])
         maxrank = max(pageranks.values())
-        normalizescores = dict([(u, float(l) / maxrank) for (u,l) in pageranks.items()])
+        normalizescores = dict([(u, float(l) / maxrank) for (u, l) in pageranks.items()])
         return normalizescores
 
     def linktextscore(self, rows, wordids):
@@ -305,9 +313,17 @@ class searcher:
                             urlid = %d' % formid).fetchone()[0]
                     linkscores[toid] += pr
         maxscore = max(linkscores.values())
-        normalizescores = dict([(u, float(l) / maxscore) for (u,l) in
-            linkscores.items()])
+        normalizescores = dict([(u, float(l) / maxscore) for (u, l) in
+                                linkscores.items()])
         return normalizescores
+
+    def nnscore(self, rows, wordids):
+        # Obtener identificaciones URL unicas como una lista ordenada
+        urlids = [urlid for urlid in set([row[0] for row in rows])]
+        nnres = mynet.getresult(wordids, urlids)
+        scores = dict([(urlids[i], nnres[i]) for i in range(len(urlids))])
+        return self.normalizescores(scores)
+
 
 def main():
     print "Ejemplos que aparecen en el proyecto principal"
@@ -432,6 +448,15 @@ def main():
     e = searchengine.searcher('searchindex.db')
     e.query('functional programming')
     """
+
+    """
+    print "Ejemplo 16"
+    print "nnscore"
+    import searchengine
+    e = searchengine.searcher('searchindex.db')
+    e.query('functional programming')
+    """
+
 
 if __name__ == "__main__":
     main()
