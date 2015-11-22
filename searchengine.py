@@ -113,7 +113,15 @@ class crawler:
         else:
             return v.strip()
 
-    # Separa las palabras
+    """
+    Funcion: separatewords(self, text):
+    Descripcion: Esta funcion separa las palabras de un texto de tal manera que se puedan
+                 indexar una a una.
+    Parametros:
+    self - Es una referencia a un objeto.
+    text - Es un texto.
+    Valor de retorno: Regresa una lista con las palabras separadas del texto. 
+    """
     def separatewords(self, text):
         splitter = re.compile('\\W*')
         return [s.lower() for s in splitter.split(text) if s != '']
