@@ -167,7 +167,14 @@ class crawler:
                 self.dbcommit()
             pages = newpages
 
-    # Se crean las tablas para la base de datos
+    """
+    Funcion: createindextables(self):
+    Descripcion: Esta funcion crea el esquema para todas las tablas que se usan en la
+                 base de datos las cuales dan soporte al crawl.
+    Parametros:
+    self - Es una referencia a un objeto.
+    Valor de retorno: None
+    """
     def createindextables(self):
         self.con.execute('create table urllist(url)')
         self.con.execute('create table wordlist(word)')
