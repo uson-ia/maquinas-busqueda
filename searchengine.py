@@ -144,7 +144,14 @@ class crawler:
         splitter = re.compile('\\W*')
         return [s.lower() for s in splitter.split(text) if s != '']
 
-    # Retorna true si esta url ya esta indexada
+    """
+    Funcion: isindexed(self, url)
+    Descripcion: Esta funcion revisa si la pagina ha sido indexada.
+    Parametros:
+    self - Es una referencia a un objeto.
+    url  - Es una pagina.
+    Valor de retorno: Regresa True si la pagina ha sido indexada de lo contrario regresa False.
+    """
     def isindexed(self, url):
         u = self.con.execute \
             ("select rowid from urllist where url='%s'" % url).fetchone()
