@@ -93,7 +93,14 @@ class crawler:
             self.con.execute("insert into wordlocation(urlid, wordid, location) \
                 values (%d,%d,%d)" % (urlid, wordid, i))
 
-    # Extrae el texto de una pagina HTML (sin tags)
+    """
+    Funcion: gettextonly(self, soup):
+    Descripcion: Esta funcion extrae el texto de una pagina HTML sin etiquetas.
+    Parametros:
+    self - Es una referencia a un objeto.
+    soup - Es un objeto de tipo BeautifulSoup.
+    Valor de retorno: Regresa el texto de una pagina HTML sin etiquetas. 
+    """
     def gettextonly(self, soup):
         v = soup.string
         if v == None:
