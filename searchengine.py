@@ -27,7 +27,7 @@ Descripcion: Los objetivos principales de esta clase son:
 """
 class crawler:
     """
-    Funcion: __init__(self, dbname):
+    Funcion: __init__(self, dbname)
     Descripcion: Esta funcion crea la conexion a la base de datos con el nombre de dbname.
     Parametros:
     self   - Es una referencia a un objeto.
@@ -38,7 +38,7 @@ class crawler:
         self.con = sqlite.connect(dbname)
 
     """
-    Funcion: __del__(self):
+    Funcion: __del__(self)
     Descripcion: Esta funcion cierra la conexion a la base de datos.
     Parametros:
     self - Es una referencia a un objeto.
@@ -48,7 +48,7 @@ class crawler:
         self.con.close()
 
     """
-    Funcion: dbcommit(self):
+    Funcion: dbcommit(self)
     Descripcion: Esta funcion guarda en la base de datos los cambios realizados en algun registro.
     Parametros:
     self - Es una referencia a un objeto.
@@ -57,8 +57,17 @@ class crawler:
     def dbcommit(self):
         self.con.commit()
 
-    # Funcion auxiliar para obtener el id de la entrada y agregarlo
-    # si no esta presente
+    """
+    Funcion: getentryid(self, table, field, value)
+    Descripcion: Esta funcion obtiene el id de una entrada a consultar si no se encuentra
+                 dicho id se crea.
+    Parametros:
+    self  - Es una referencia a un objeto.
+    table - Es el nombre de una tabla de una base de datos.
+    field - Es el nombre de un campo de una tabla de una base de datos.
+    value - Es un valor que puede estar o no estar en una base de datos.
+    Valor de retorno: Regresa el id de la entrada a consultar.
+    """
     def getentryid(self, table, field, value, createnew=True):
         cur = self.con.execute(
             "select rowid from %s where %s='%s'" % (table, field, value))
@@ -71,7 +80,7 @@ class crawler:
             return res[0]
 
     """
-    Funcion: addtoindex(self, url, soup):
+    Funcion: addtoindex(self, url, soup)
     Descripcion: Esta funcion invoca dos funciones definidas previamente las cuales consisten en obtener el texto
                  de una pagina y separar las palabras de un texto. Despues indexa las palabras del texto obtenidas 
                  tal que crea enlaces entre ellas con sus posiciones en dicha pagina.
@@ -103,7 +112,7 @@ class crawler:
                 values (%d,%d,%d)" % (urlid, wordid, i))
 
     """
-    Funcion: gettextonly(self, soup):
+    Funcion: gettextonly(self, soup)
     Descripcion: Esta funcion extrae el texto de una pagina HTML sin etiquetas.
     Parametros:
     self - Es una referencia a un objeto.
@@ -123,7 +132,7 @@ class crawler:
             return v.strip()
 
     """
-    Funcion: separatewords(self, text):
+    Funcion: separatewords(self, text)
     Descripcion: Esta funcion separa las palabras de un texto de tal manera que se puedan
                  indexar una a una.
     Parametros:
@@ -192,7 +201,7 @@ class crawler:
             pages = newpages
 
     """
-    Funcion: createindextables(self):
+    Funcion: createindextables(self)
     Descripcion: Esta funcion crea el esquema para todas las tablas que se usan en la
                  base de datos las cuales dan soporte al crawl.
     Parametros:
