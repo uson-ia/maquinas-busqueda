@@ -362,6 +362,14 @@ class searcher:
 
         return totalscores
 
+    """
+    Funcion: geturlname(self, id):
+    Descripcion: Esta funcion recibe el id de una pagina y regresa el nombre de dicha pagina.
+    Parametros:
+    self - Es una referencia a un objeto.
+    id   - Es el id de una pagina a consultar. 
+    Valor de retorno: Regresa el nombre de la pagina correspondiente al id dado.
+    """
     def geturlname(self, id):
         return self.con.execute(
             "select url from urllist where rowid=%d" % id).fetchone()[0]
