@@ -15,15 +15,15 @@ mynet = nn.searchnet('nn.db')
 Clase: crawler
 Descripcion: Los objetivos principales de esta clase son:
 
-             * Crawling
+             * Crawl
              * Crear la base de datos
 
-             El crawling consiste en comenzar con un conjunto pequeno de paginas y seguir los 
+             El crawl consiste en comenzar con un conjunto pequeno de paginas y seguir los 
              enlaces que se encuentran en esas paginas lo cual lleva a otras paginas. 
 
              La base de datos consta de una serie de tablas las cuales dan soporte al
-             crawling ya que cada vez que se visita una pagina se guarda una referencia a dicha 
-             pagina a esto se le llama indexado. Estas referencias se almacenan en la base de datos.
+             crawl ya que cada vez que se visita una pagina se guarda una referencia a dicha 
+             pagina a esto se le llama indexar. Estas referencias se almacenan en la base de datos.
 """
 class crawler:
     # Se inicializa el crawler con el nombre de la base de datos
@@ -106,9 +106,19 @@ class crawler:
     def addlinkref(self, urlFrom, urlTo, linkText):
         pass
 
-    # Comienza con una lista de paginas, hace una amplitud
-    # primero busca a la profundidad dada , indexando paginas
-    # como va
+    """
+    Funcion: crawl(self, pages, depth=2)
+    Descripcion: Esta funcion recorre una lista de paginas con busqueda a lo ancho
+                 a la profundidad dada indexa cada pagina que encuentre. Luego 
+                 usa BeautifulSoup para obtener todos los enlaces de la pagina visitada y 
+                 agrega sus direcciones a un conjunto llamado nuevas paginas al final del 
+                 bucle nuevas paginas se convierte en paginas y asi sucesivamente.
+    Parametros:
+    self  - Es una referencia a un objeto.
+    pages - Es una lista de paginas.
+    depth - Es un numero que define la profundidad a la cual buscara el crawl. 
+    Valor de retorno: None
+    """
     def crawl(self, pages, depth=2):
         for i in range(depth):
             newpages = set()
