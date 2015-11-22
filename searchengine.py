@@ -285,6 +285,16 @@ class searcher:
     def __del__(self):
         self.con.close()
 
+    """
+    Funcion: getmatchrows(self, q):
+    Descripcion: Esta funcion recibe una cadena que es una consulta y la divide en palabras separadas
+                 de tal forma que construye una nueva consulta para encontrar las paginas que contienen
+                 dichas palabras.
+    Parametros:
+    self - Es una referencia a un objeto.
+    q    - Es una cadena que es una consulta dicha consulta contiene palabras.
+    Valor de retorno: Regresa los ids de las paginas y las ubicaciones donde se encuentran dichas palabras de la consulta.
+    """
     def getmatchrows(self, q):
         # Cadenas para construir el query
         fieldlist = 'w0.urlid'
