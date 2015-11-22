@@ -83,7 +83,7 @@ class crawler:
     Funcion: addtoindex(self, url, soup)
     Descripcion: Esta funcion invoca dos funciones definidas previamente las cuales consisten en obtener el texto
                  de una pagina y separar las palabras de un texto. Despues indexa las palabras del texto obtenidas 
-                 tal que crea enlaces entre ellas con sus posiciones en dicha pagina.
+                 tal que crea enlaces entre ellas con sus ubicaciones en dicha pagina.
     self - Es una referencia a un objeto.
     url  - Es una pagina.
     soup - Es un objeto de tipo BeautifulSoup.
@@ -264,9 +264,24 @@ class crawler:
 
 
 class searcher:
+    """
+    Funcion: __init__(self, dbname)
+    Descripcion: Esta funcion crea la conexion a la base de datos con el nombre de dbname.
+    Parametros:
+    self   - Es una referencia a un objeto.
+    dbname - Es el nombre de una base de datos.
+    Valor de retorno: None
+    """
     def __init__(self, dbname):
         self.con = sqlite.connect(dbname)
 
+    """
+    Funcion: __del__(self)
+    Descripcion: Esta funcion cierra la conexion a la base de datos.
+    Parametros:
+    self - Es una referencia a un objeto.
+    Valor de retorno: None
+    """
     def __del__(self):
         self.con.close()
 
