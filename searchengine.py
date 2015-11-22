@@ -26,13 +26,34 @@ Descripcion: Los objetivos principales de esta clase son:
              pagina a esto se le llama indexar. Estas referencias se almacenan en la base de datos.
 """
 class crawler:
-    # Se inicializa el crawler con el nombre de la base de datos
+    """
+    Funcion: __init__(self, dbname):
+    Descripcion: Esta funcion crea la conexion a la base de datos con el nombre de dbname.
+    Parametros:
+    self   - Es una referencia a un objeto.
+    dbname - Es el nombre de una base de datos.
+    Valor de retorno: None
+    """
     def __init__(self, dbname):
         self.con = sqlite.connect(dbname)
 
+    """
+    Funcion: __del__(self):
+    Descripcion: Esta funcion cierra la conexion a la base de datos.
+    Parametros:
+    self - Es una referencia a un objeto.
+    Valor de retorno: None
+    """
     def __del__(self):
         self.con.close()
 
+    """
+    Funcion: dbcommit(self):
+    Descripcion: Esta funcion guarda en la base de datos los cambios realizados en algun registro.
+    Parametros:
+    self - Es una referencia a un objeto.
+    Valor de retorno: None
+    """
     def dbcommit(self):
         self.con.commit()
 
@@ -116,7 +137,7 @@ class crawler:
     Parametros:
     self  - Es una referencia a un objeto.
     pages - Es una lista de paginas.
-    depth - Es un numero que define la profundidad a la cual buscara el crawl. 
+    depth - Es un numero que define la profundidad a la cual busca el crawl. 
     Valor de retorno: None
     """
     def crawl(self, pages, depth=2):
