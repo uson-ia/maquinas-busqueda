@@ -70,7 +70,16 @@ class crawler:
         else:
             return res[0]
 
-    # Indexar una pagina individual
+    """
+    Funcion: addtoindex(self, url, soup):
+    Descripcion: Esta funcion invoca dos funciones definidas previamente las cuales consisten en obtener el texto
+                 de una pagina y separar las palabras de un texto. Despues indexa las palabras del texto obtenidas 
+                 tal que crea enlaces entre ellas con sus posiciones en dicha pagina.
+    self - Es una referencia a un objeto.
+    url  - Es una pagina.
+    soup - Es un objeto de tipo BeautifulSoup.
+    Valor de retorno: None
+    """
     def addtoindex(self, url, soup):
         # print 'Indexando %s' % url
         if self.isindexed(url):
