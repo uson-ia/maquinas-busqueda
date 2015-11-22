@@ -440,14 +440,16 @@ class searcher:
         return self.normalizescores(counts)
 
     """
-    Funcion: locationscore(self, rows)
+    Funcion: locationscore(self, rows):
     Descripcion: Esta funcion recibe los ids de diferentes paginas y crea un diccionario donde
                  a cada entrada le corresponde el id de una pagina ademas de un score el cual 
                  se obtiene al localizar las palabras al principio de la pagina esto significa que
                  si las palabras se encuentran al principio de la pagina la pagina es mas relevante 
                  que las demas esto se hace gracias a que se tienen las ubicaciones de las palabras.
-                 Para finalizar se regresa un nuevo diccionario con los mismos ids de las paginas 
-                 pero con los scores obtenidos y normalizados. 
+                 Al tener las ubicaciones de las palabras se suman sus posiciones y se obtiene un numero
+                 mientras mas pequeno sea el numero es mejor ya que significa que las palabras se encuentran
+                 al principio de la pagina. Para finalizar se regresa un diccionario con los mismos ids
+                 de las paginas pero con los scores obtenidos y normalizados. 
     Parametros:
     self - Es una referencia a un objeto.
     rows - Son los ids de algunas paginas.
@@ -462,6 +464,22 @@ class searcher:
                 locations[row[0]] = loc
         return self.normalizescores(locations, smallIsBetter=1)
 
+    """
+    Funcion: distancescore(self, rows):
+    Descripcion: Esta funcion recibe los ids de diferentes paginas y crea un diccionario donde
+                 a cada entrada le corresponde el id de una pagina ademas de un score el cual 
+                 se obtiene al medir la distancia entre las palabras a buscar esto se hace de la siguiente 
+                 manera se localizan dos palabras y se saca la diferencia de las posiciones en donde se encuentran
+                 dichas palabras despues continua calculando la distancia entre mas palabras y asi sucesivamente
+                 mientras la distancia sea menor es mejor ya que significa que las palabras estan cerca una de otra. 
+                 Para finalizar se regresa un diccionario con los mismos ids de las paginas pero con los scores obtenidos 
+                 y normalizados. 
+    Parametros:
+    self - Es una referencia a un objeto.
+    rows - Son los ids de algunas paginas.
+    Valor de retorno: Regresa un diccionario con los mismos ids de las paginas pero con los scores 
+                      obtenidos y normalizados.
+    """
     def distancescore(self, rows):
         # Si solo hay una palabra, todos ganamos!
         if len(rows[0]) <= 2: return dict([(row[0], 1.0) for row in rows])
