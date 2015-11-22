@@ -336,7 +336,7 @@ class searcher:
                  los ids de las paginas y el score de cada una.
     Parametros:
     self    - Es una referencia a un objeto.
-    rows    - Son los ids de las paginas.
+    rows    - Son los ids de algunas paginas.
     wordids - Son los ids donde se encuentran las palabras de una consulta.
     Valor de retorno: Regresa un diccionario con los ids de las paginas y el score que recibio cada una.
     """
@@ -397,10 +397,11 @@ class searcher:
 
     """
     Funcion: normalizescores(self, scores, smallIsBetter=0):
-    Descripcion: Esta funcion recibe un diccionario que contiene las ids de diferentes paginas y los scores obtenidos de 
-                 cada pagina. Una vez que se obtiene dicho diccionario se normalizan los scores de cada pagina esto quiere 
-                 decir que transforma los scores obtenidos a nuevos scores en el rango de entre 0 y 1. Para finalizar se
-                 regresa un nuevo diccionario con los mismos ids de las paginas pero con los scores normalizados.
+    Descripcion: Esta funcion recibe un diccionario que contiene las ids de diferentes paginas y los scores 
+                 obtenidos de cada pagina. Una vez que se obtiene dicho diccionario se normalizan los scores 
+                 de cada pagina esto quiere decir que transforma los scores obtenidos a nuevos scores en el rango
+                 de entre 0 y 1. Para finalizar se regresa un nuevo diccionario con los mismos ids de las paginas 
+                 pero con los scores normalizados.
     Parametros:
     self          - Es una referencia a un objeto.
     scores        - Es un diccionario que contiene las ids de diferentes paginas y los scores obtenidos de cada pagina.
@@ -419,6 +420,18 @@ class searcher:
                 maxscore = vsmall
             return dict([(u, float(c) / maxscore) for (u, c) in scores.items()])
 
+    """
+    Funcion: frequencyscore(self, rows)
+    Descripcion: Esta funcion recibe los ids de diferentes paginas y crea un diccionario donde
+                 a cada entrada le corresponde el id de una pagina ademas de un score el cual 
+                 se obtiene al contar el numero de veces que aparece una palabra en la pagina.
+                 Para finalizar se regresa un nuevo diccionario con los mismos ids de las paginas 
+                 pero con los scores normalizados. 
+    Parametros:
+    self - Es una referencia a un objeto.
+    rows - Son los ids de algunas paginas.
+    Valor de retorno: Regresa un nuevo diccionario con los scores obtenidos y los normaliza.
+    """
     def frequencyscore(self, rows):
         counts = dict([(row[0], 0) for row in rows])
         for row in rows:
