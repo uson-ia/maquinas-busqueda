@@ -11,8 +11,21 @@ ignorewords = set(['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it'])
 
 mynet = nn.searchnet('nn.db')
 
+"""
+Clase: crawler
+Descripcion: Los objetivos principales de esta clase son:
 
-class crawler(object):
+             * Crawling
+             * Crear la base de datos
+
+             El crawling consiste en comenzar con un conjunto pequeno de paginas y seguir los 
+             enlaces que se encuentran en esas paginas lo cual lleva a otras paginas. 
+
+             La base de datos consta de una serie de tablas las cuales dan soporte al
+             crawling ya que cada vez que se visita una pagina se guarda una referencia a dicha 
+             pagina a esto se le llama indexado. Estas referencias se almacenan en la base de datos.
+"""
+class crawler:
     # Se inicializa el crawler con el nombre de la base de datos
     def __init__(self, dbname):
         self.con = sqlite.connect(dbname)
