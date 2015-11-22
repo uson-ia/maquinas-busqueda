@@ -395,6 +395,18 @@ class searcher:
 
         return wordids, [r[1] for r in rankedscores[0:10]]
 
+    """
+    Funcion: normalizescores(self, scores, smallIsBetter=0):
+    Descripcion: Esta funcion recibe un diccionario que contiene las ids de diferentes paginas y los scores obtenidos de 
+                 cada pagina. Una vez que se obtiene dicho diccionario se normalizan los scores de cada pagina esto quiere 
+                 decir que transforma los scores obtenidos a nuevos scores en el rango de entre 0 y 1. Para finalizar se
+                 regresa un nuevo diccionario con los mismos ids de las paginas pero con los scores normalizados.
+    Parametros:
+    self          - Es una referencia a un objeto.
+    scores        - Es un diccionario que contiene las ids de diferentes paginas y los scores obtenidos de cada pagina.
+    smallIsBetter - Es una variable que indica que el score mas pequeno o mas grande es mejor.
+    Valor de retorno: Regresa un nuevo diccionario con los mismos ids de las paginas pero con los scores normalizados. 
+    """
     def normalizescores(self, scores, smallIsBetter=0):
         vsmall = 0.00001  # Se evita la division por cero
         if smallIsBetter:
