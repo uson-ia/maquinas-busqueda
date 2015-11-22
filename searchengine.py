@@ -293,7 +293,7 @@ class searcher:
     Parametros:
     self - Es una referencia a un objeto.
     q    - Es una cadena que es una consulta dicha consulta contiene palabras.
-    Valor de retorno: Regresa los ids de las paginas y las ubicaciones donde se encuentran dichas palabras de la consulta.
+    Valor de retorno: Regresa los ids de las paginas y los ids donde se encuentran dichas palabras de la consulta.
     """
     def getmatchrows(self, q):
         # Cadenas para construir el query
@@ -329,6 +329,17 @@ class searcher:
 
         return rows, wordids
 
+    """
+    Funcion: getscoredlist(self, rows, wordids):
+    Descripcion: Esta funcion recibe los ids de las paginas y los ids donde se encuentran las palabras de una 
+                 consulta. Evalua cada pagina de acuerdo a una funcion de rankeo y regresa un diccionario con
+                 los ids de las paginas y el score de cada una.
+    Parametros:
+    self    - Es una referencia a un objeto.
+    rows    - Son los ids de las paginas.
+    wordids - Son los ids donde se encuentran las palabras de una consulta.
+    Valor de retorno: Regresa un diccionario con los ids de las paginas y el score de cada una.
+    """
     def getscoredlist(self, rows, wordids):
         totalscores = dict([(row[0], 0) for row in rows])
 
