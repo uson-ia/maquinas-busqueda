@@ -493,6 +493,20 @@ class searcher:
                 mindistance[row[0]] = dist
         return self.normalizescores(mindistance, smallIsBetter=1)
 
+    """
+    Funcion: inboundlinkscore(self, rows):
+    Descripcion: Esta funcion recibe los ids de diferentes paginas y crea un diccionario donde
+                 a cada entrada le corresponde el id de una pagina ademas de un score el cual 
+                 se obtiene al contar los enlaces que referencian a la pagina que se le esta asignando 
+                 mientras el score sea mas alto es mejor ya que significa que la pagina tiene
+                 mas referencias hacia ella. Para finalizar se regresa un diccionario con los mismos 
+                 ids de las paginas pero con los scores obtenidos y normalizados. 
+    Parametros:
+    self - Es una referencia a un objeto.
+    rows - Son los ids de algunas paginas.
+    Valor de retorno: Regresa un diccionario con los mismos ids de las paginas pero con los scores 
+                      obtenidos y normalizados.
+    """
     def inboundlinkscore(self, rows):
         uniqueurls = set([row[0] for row in rows])
         inboundcount = dict([(u, self.con.execute(
