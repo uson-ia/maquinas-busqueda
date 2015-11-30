@@ -9,6 +9,7 @@ import nn
 # Se crea una lista de palabras a ignorar
 ignorewords = set(['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it'])
 
+# Base de datos que guarda los valores de los nodos de cada capa de la red neuronal.
 mynet = nn.searchnet('nn.db')
 
 """
@@ -228,6 +229,16 @@ class crawler:
         self.con.execute('create index urlfromidx on link(fromid)')
         self.dbcommit()
 
+    """
+    Funcion: calculatepagerank(self, iterations=20)
+    Descripcion: Esta funcion inicializa el valor de pagerank para cada pagina en 1.0 despues 
+    			 se ejecuta un bucle el cual itera n veces en donde se calcula el valor del
+    			 pagerank y el total de enlaces que referencian a cada pagina.
+    Parametros:
+    self 	   - Es una referencia a un objeto.
+    iterations - Numero de iteraciones que ejecuta el algoritmo.
+    Valor de retorno: None
+    """
     def calculatepagerank(self, iterations=20):
         # Elimina los registros actuales de la tabla de pagerank si existen
         self.con.execute('drop table if exists pagerank')
@@ -514,6 +525,20 @@ class searcher:
                              for u in uniqueurls])
         return self.normalizescores(inboundcount)
 
+    """
+    Funcion: pagerankscore(self, rows)
+    Descripcion: Esta funcion recibe los ids de diferentes paginas y crea un diccionario donde
+                 a cada entrada le corresponde el id de una pagina ademas de un score el cual 
+                 se obtiene al ejecutar el algoritmo de pagerank este devuelve el valor de pagerank para
+                 cada pagina asi como el total de enlaces que referencian a esa pagina. Para finalizar 
+                 se regresa un diccionario con los mismos ids de las paginas pero con los scores obtenidos 
+                 y normalizados. 
+    Parametros:
+    self - Es una referencia a un objeto.
+    rows - Son los ids de algunas paginas.
+    Valor de retorno: Regresa un diccionario con los mismos ids de las paginas pero con los scores 
+                      obtenidos y normalizados.
+    """
     def pagerankscore(self, rows):
         pageranks = dict([(row[0], self.con.execute('select score from \
                 pagerank where urlid = %d' % row[0]).fetchone()[0]) for row in rows])
@@ -521,6 +546,23 @@ class searcher:
         normalizescores = dict([(u, float(l) / maxrank) for (u, l) in pageranks.items()])
         return normalizescores
 
+    """
+    Funcion: linktextscore(self, rows, wordids)
+    Descripcion: Esta funcion recibe los ids de diferentes paginas, palabras y crea un diccionario donde
+                 a cada entrada le corresponde el id de una pagina ademas de un score el cual se obtiene al 
+                 recorrer todas las palabras en los ids de las palabras y busca enlaces que contengan estas palabras
+                 si una de las palabras a buscar coincide con un enlace se toma el valor de pagerank de ese enlace y se suman
+                 al score de esa palabra si una pagina tiene muchos enlaces a otras paginas que contienen esa palabra tendra un score
+                 alto aunque tambien existe el caso de ver una pagina que sus enlaces no contengan esa palabra y su valor sera cero.
+				 Para finalizar se regresa un diccionario con los mismos ids de las paginas pero con los scores obtenidos 
+                 y normalizados. 
+    Parametros:
+    self 	- Es una referencia a un objeto.
+    rows 	- Son los ids de algunas paginas.
+    wordids - Son los ids donde se encuentran las palabras de una consulta.
+    Valor de retorno: Regresa un diccionario con los mismos ids de las paginas pero con los scores 
+                      obtenidos y normalizados.
+    """
     def linktextscore(self, rows, wordids):
         linkscores = dict([(row[0], 0) for row in rows])
         for wordid in wordids:
@@ -537,6 +579,21 @@ class searcher:
                                 linkscores.items()])
         return normalizescores
 
+    """
+    Funcion: nnscore(self, rows, wordids)
+    Descripcion: Esta funcion recibe los ids de diferentes paginas, palabras y crea un diccionario donde
+                 a cada entrada le corresponde el id de una pagina ademas de un score el cual se obtiene al 
+                 ejecutar una red neuronal la cual regresa un score el cual es la cantidad de clicks que hicieron 
+                 varios usuarios a un enlace el cual contiene dichas palabras entre mas clicks tenga un enlace mas
+                 alto sera su score. Para finalizar se regresa un diccionario con los mismos ids de las paginas pero
+                 con los scores obtenidos y normalizados. 
+    Parametros:
+    self 	- Es una referencia a un objeto.
+    rows 	- Son los ids de algunas paginas.
+    wordids - Son los ids donde se encuentran las palabras de una consulta.
+    Valor de retorno: Regresa un diccionario con los mismos ids de las paginas pero con los scores 
+                      obtenidos y normalizados.
+    """
     def nnscore(self, rows, wordids):
         # Obtener identificaciones URL unicas como una lista ordenada
         urlids = [urlid for urlid in set([row[0] for row in rows])]
