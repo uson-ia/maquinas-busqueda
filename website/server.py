@@ -25,7 +25,7 @@ class MainHandler(RequestHandler):
 
     def post(self):
         query = self.get_argument("input-query")
-        print "La busqueda que se realizara utilizara la cadena '%s' como consulta" % query
+        print("La busqueda que se realizara utilizara la cadena '%s' como consulta" % query)
         update_data(query)
         self.get()
 
@@ -50,7 +50,7 @@ def main():
     app = make_app()
     port = 3456
     app.listen(port)
-    print "Ahoy pirate! bring your ship to the port " + str(port) + " [url is localhost:" + str(port) + "]"
+    print("Ahoy pirate! bring your ship to the port " + str(port) + " [url is localhost:" + str(port) + "]")
     IOLoop.current().start()
 
 if __name__ == "__main__":

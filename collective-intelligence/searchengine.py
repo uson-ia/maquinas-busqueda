@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import urllib2
+import urllib
 from bs4 import *
-from urlparse import urljoin
+from urllib.parse import urljoin
 from sqlite3 import dbapi2 as sqlite
 import re
 import os
@@ -16,6 +16,9 @@ ignore_words = set([line.strip() for line in
                    +
                    [line.strip() for line in
                     open(dirpath + "/stop-words/stop-words_spanish_2_es.txt", "r")])
+
+def print(x):
+    pass
 
 class crawler:
     def __init__(self, db_name):
@@ -76,14 +79,14 @@ class crawler:
 
         relaciona las palabras con la url en la base de datos
         """
-        print "      INDEXING WORDS FROM URL ID %s" % url_id
+        print("      INDEXING WORDS FROM URL ID %s" % url_id)
         for i in range(len(words)):
             word = words[i]
             if word in ignore_words:
                 continue
             word_id = self.select_entry_id("wordlist", "word", word)
             if word_id is None:
-                print "        %s" % word
+                print("        %s" % word)
                 self.insert_entry("wordlist", "word", word)
                 word_id = self.select_entry_id("wordlist", "word", word)
             self.connection.execute("insert into wordlocation(urlid, wordid, location) values (%d,%d,%d)"
@@ -100,7 +103,7 @@ class crawler:
         """
         if self.is_indexed(url):
             return
-        print "    INDEXING %s" % url
+        print("    INDEXING %s" % url)
         text = self.strip_html_tags(html)
         words = self.separate_words(text)
 
@@ -109,7 +112,7 @@ class crawler:
             self.insert_entry("urllist", "url", url)
             url_id = self.select_entry_id("urllist", "url", url)
         self.index_page_words(url_id, words)
-        print "      INDEXED! %s" % url
+        print("      INDEXED! %s" % url)
 
     def strip_html_tags(self, html):
         """
@@ -133,7 +136,7 @@ class crawler:
 
         regresa una lista con las palabras del texto
         """
-        splitter = re.compile(ur"\W*", re.UNICODE)
+        splitter = re.compile(r"\W*", re.UNICODE)
         splitted = splitter.split(text)
         return [s.lower() for s in splitted if s != ""]
 
@@ -165,7 +168,7 @@ class crawler:
                 continue
             word_id = self.select_entry_id("wordlist", "word", word)
             if word_id is None:
-                print "        PALABRA %s" % word
+                print("        PALABRA %s" % word)
                 self.insert_entry("wordlist", "word", word)
                 word_id = self.select_entry_id("wordlist", "word", word)
             self.connection.execute("insert into linkwords(wordid, linkid) values (%d,%d)"
@@ -207,8 +210,9 @@ class crawler:
 
         regresa el contenido y la codificación de la página asociada a la URL
         """
+        print("\t\tIN get_page PROCEDURE: URL = %s" % url)
         try:
-            resource = urllib2.urlopen(url)
+            resource = urllib.request.urlopen(url)
         except:
             #raise Exception("Could not open %s" % url)
             return None, None
@@ -221,16 +225,16 @@ class crawler:
         try:
             if charset_idx == -1:
                 data = resource.read()
-                charset_idx = data.find("charset=")
+                charset_idx = data.find(b"charset=")
                 if charset_idx == -1:
                     encoding = "ascii"
-                    content = unicode(data, encoding)
+                    content = data.decode(encoding)
                 else:
-                    encoding = re.split(";|\"", data[charset_idx+8:])[0]
-                    content = unicode(data, encoding)
+                    encoding = re.split(";|\"", str(data[charset_idx+8:][:20])[2:])[0]
+                    content = data.decode(encoding)
             else:
                 encoding = content_type[charset_idx+8:].split(";")[0]
-                content = unicode(resource.read(), encoding)
+                content = resource.read().decode(encoding)
                 #encoding = content_type.split("charset=")[-1]
         except:
             return None, None
@@ -286,18 +290,18 @@ class crawler:
         se procesarán las páginas (similar a la profundidad de una búsqueda
         en grafos)
         """
-        print "CRAWL"
+        print("CRAWL")
         for i in range(depth):
-            print "  DEPTH %d" % i
+            print("  DEPTH %d" % i)
             new_urls = set()
-            print "  URLs %s" % urls
+            print("  URLs %s" % urls)
             for url in urls:
-                print "%d  VISITING %s" % (i, url)
+                print("%d  VISITING %s" % (i, url))
                 content, encoding = self.get_page(url)
                 if content is None and encoding is None:
                     continue
                 html = self.parse_page(content)
-                print "    VISITED %s" % url
+                print("    VISITED %s" % url)
                 self.index_page(url, html)
 
                 links = html.select("a")
@@ -351,9 +355,9 @@ class crawler:
 
         self.connection.execute("insert into pagerank select rowid, 1.0 from urllist")
         self.db_commit()
-        print "CALCULATING PAGERANK..."
+        print("CALCULATING PAGERANK...")
         for i in range(iterations):
-            print "  ITERATION %d" % i
+            print("  ITERATION %d" % i)
             for (url_id,) in self.connection.execute("select rowid from urllist"):
                 pr = 0.15
                 for (linker,) in self.connection.execute("select distinct fromid from link where toid=%d" % url_id):
@@ -364,7 +368,7 @@ class crawler:
                     pr += 0.95*(linking_pr/linking_count)
                 self.connection.execute("update pagerank set score=%f where urlid=%d" % (pr, url_id))
             self.db_commit()
-        print "PAGERANK CALCULATION COMPLETED"
+        print("PAGERANK CALCULATION COMPLETED")
 
 class searcher:
     def __init__(self, db_name):
@@ -399,9 +403,9 @@ class searcher:
                 table_number += 1
 
         full_query = "select %s from %s where %s" % (field_list, table_list, clause_list)
-        print "BEGIN FULL QUERY"
-        print full_query
-        print "END FULL QUERY"
+        print("BEGIN FULL QUERY")
+        print(full_query)
+        print("END FULL QUERY")
 
         if table_list == "" or clause_list == "":
             return None, None
@@ -431,19 +435,19 @@ class searcher:
         try:
             rows, word_ids = self.get_matched_rows(search_query)
         except:
-            print u">>> Error al ejecutar la búsqueda '"+search_query+"'"
-            print u">>> Asegurate de haber ejecutado el crawler. "
-            print u">>> Para más información checa el README.md del proyecto"
+            print(u">>> Error al ejecutar la búsqueda '"+search_query+"'")
+            print(u">>> Asegurate de haber ejecutado el crawler. ")
+            print(u">>> Para más información checa el README.md del proyecto")
             return
 
         if rows is None and word_ids is None:
-            # print "No results where found"
+            # print("No results where found")
             return []
         else:
             scores = self.get_scored_list(rows, word_ids)
             ranked_scores = sorted([(score, url) for (url, score) in scores.items()], reverse=1)
             #for (score, url_id) in ranked_scores[0:10]:
-            #    print '%f\t%s' % (score, self.get_url_name(url_id))
+            #    print('%f\t%s' % (score, self.get_url_name(url_id)))
             return [[score, self.get_url_name(url_id)] for (score, url_id) in ranked_scores[0:10]]
 
     def normalize_scores(self, scores, small_is_better = False):
@@ -512,3 +516,21 @@ class searcher:
         max_score = 1 if max_score == 0 else max_score
         normalized_scores = dict([(u,float(l)/max_score) for (u,l) in link_scores.items()])
         return normalized_scores
+
+def crawl_unison(d, i):
+    #print("\t\t\tos.remove(dirpath + \"/db/index.db\"")
+    #try:
+    #    os.remove(dirpath + "/db/index.db")
+    #except:
+    #    print("File already deleted")
+    print("\t\t\turls = [\"http://unison.edu.mx\"]")
+    urls = ["http://www.unison.edu.mx"]
+    print("\t\t\tc = crawler(\"index.db\")")
+    c = crawler("index.db")
+    print("\t\t\tc.db_create_tables()")
+    c.db_create_tables()
+    print("\t\t\tc.crawl(urls, depth=%s)" % d)
+    c.crawl(urls, depth=d)
+    print("c.calculate_pagerank(%s)" % i)
+    c.calculate_pagerank(i)
+    return c
