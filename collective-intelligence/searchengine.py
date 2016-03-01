@@ -3,6 +3,7 @@
 import urllib
 from bs4 import *
 from urllib.parse import urljoin
+from urllib.request import urlopen
 from sqlite3 import dbapi2 as sqlite
 import re
 import os
@@ -10,15 +11,15 @@ import os
 dirpath =  os.path.dirname(os.path.abspath(__file__))
 
 test_urls    = ["http://eduardoacye.github.io"]
-test_db      = "searchindex.db"
+test_db      = "index.db"
 ignore_words = set([line.strip() for line in
                     open(dirpath + "/stop-words/stop-words_spanish_1_es.txt", "r")]
                    +
                    [line.strip() for line in
                     open(dirpath + "/stop-words/stop-words_spanish_2_es.txt", "r")])
 
-def print(x):
-    pass
+#def print(x):
+#    pass
 
 class crawler:
     def __init__(self, db_name):
@@ -136,8 +137,10 @@ class crawler:
 
         regresa una lista con las palabras del texto
         """
-        splitter = re.compile(r"\W*", re.UNICODE)
-        splitted = splitter.split(text)
+        splitted = re.split("\W+", text)
+        
+        #splitter = re.compile(r"\W*", re.UNICODE)
+        #splitted = splitter.split(text)
         return [s.lower() for s in splitted if s != ""]
 
     def is_indexed(self, url):
@@ -212,7 +215,7 @@ class crawler:
         """
         print("\t\tIN get_page PROCEDURE: URL = %s" % url)
         try:
-            resource = urllib.request.urlopen(url)
+            resource = urlopen(url)
         except:
             #raise Exception("Could not open %s" % url)
             return None, None
@@ -247,7 +250,7 @@ class crawler:
 
         regresa un objeto BeautifulSoup que representa el HTML parseado
         """
-        html_tree = BeautifulSoup(content)
+        html_tree = BeautifulSoup(content, 'html.parser')
         return html_tree
 
     def has_href(self, link):
@@ -534,3 +537,12 @@ def crawl_unison(d, i):
     print("c.calculate_pagerank(%s)" % i)
     c.calculate_pagerank(i)
     return c
+
+def crawl_lcc(d,i):
+    print("CRAWLING STARTING FROM LCC")
+    urls = ["http://cc.uson.mx/cc/"]
+    spider = crawler("index.db")
+    spider.db_create_tables()
+    spider.crawl(urls,depth=d)
+    spider.calculate_pagerank(i)
+    return spider
